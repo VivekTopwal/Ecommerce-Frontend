@@ -2,7 +2,7 @@ import Image from "next/image";
 import React from "react";
 import { Heart } from "lucide-react";
 import Link from "next/link";
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight } from "lucide-react";
 import { Shippori_Mincho } from "next/font/google";
 
 const mincho = Shippori_Mincho({
@@ -15,7 +15,6 @@ const ProductCard = () => {
     <section className="py-10">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-
           <div className="bg-white overflow-hidden shadow-sm rounded">
             <div className="relative">
               <Image
@@ -57,14 +56,15 @@ const ProductCard = () => {
                 <span className="text-red-600">₹799.00</span>
               </div>
 
- <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">                Add to Cart
+              <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
+                {" "}
+                Add to Cart
               </button>
               <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
                 BUY NOW
               </button>
             </div>
           </div>
-
 
           <div className="bg-white overflow-hidden shadow-sm rounded">
             <div className="relative">
@@ -108,14 +108,15 @@ const ProductCard = () => {
                 <span className="text-red-600">₹999</span>
               </div>
 
- <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">                Add to Cart
+              <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
+                {" "}
+                Add to Cart
               </button>
               <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
                 BUY NOW
               </button>
             </div>
           </div>
-
 
           <div className="bg-white overflow-hidden shadow-sm rounded">
             <div className="relative">
@@ -135,10 +136,10 @@ const ProductCard = () => {
                 32% off
               </span>
             </div>
-          
+
             <div className="p-4 text-center space-y-2">
-               <p className="text-[13px] text-gray-500 mb-0.5">Mindful Living</p>
-                <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
+              <p className="text-[13px] text-gray-500 mb-0.5">Mindful Living</p>
+              <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
                 Time Reversal Combo
               </h3>
               <p className={`text-[13px] text-gray-500 ${mincho.className}`}>
@@ -152,14 +153,16 @@ const ProductCard = () => {
               </div>
 
               <div className={`text-lg ${mincho.className}`}>
-                  <span className="text-black">MRP: </span>
+                <span className="text-black">MRP: </span>
                 <span className="line-through text-gray-800 mr-0.5">
                   ₹2,499.00
                 </span>
                 <span className="text-red-600">₹1699.00</span>
               </div>
 
-  <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">                Add to Cart
+              <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
+                {" "}
+                Add to Cart
               </button>
               <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
                 BUY NOW
@@ -168,7 +171,6 @@ const ProductCard = () => {
           </div>
 
           <div className="bg-white overflow-hidden shadow-sm rounded">
-          
             <div className="relative">
               <Image
                 src="/images/p4.webp"
@@ -186,9 +188,9 @@ const ProductCard = () => {
                 31% off
               </span>
             </div>
-           
+
             <div className="p-4 text-center space-y-2">
-             <p className="text-[13px] text-gray-500 mb-0.5">Mindful Living</p>
+              <p className="text-[13px] text-gray-500 mb-0.5">Mindful Living</p>
               <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
                 Richie Rich Combo
               </h3>
@@ -203,14 +205,16 @@ const ProductCard = () => {
               </div>
 
               <div className={`text-lg ${mincho.className}`}>
-                 <span className="text-black">MRP: </span>
+                <span className="text-black">MRP: </span>
                 <span className="line-through text-gray-800 mr-0.5">
                   ₹1,999.00
                 </span>
                 <span className="text-red-600">₹1,599.00</span>
               </div>
 
- <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">                Add to Cart
+              <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
+                {" "}
+                Add to Cart
               </button>
               <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
                 BUY NOW
@@ -219,7 +223,6 @@ const ProductCard = () => {
           </div>
 
           <div className="bg-white overflow-hidden shadow-sm rounded mt-4">
-          
             <div className="relative">
               <Image
                 src="/images/p5.webp"
@@ -238,11 +241,10 @@ const ProductCard = () => {
               </span>
             </div>
 
-            
-              <div className="p-4 text-center space-y-2">
-             <p className="text-[13px] text-gray-500 mb-0.5">Mindful Living</p>
+            <div className="p-4 text-center space-y-2">
+              <p className="text-[13px] text-gray-500 mb-0.5">Mindful Living</p>
               <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
-              Money Bowl with Geode
+                Money Bowl with Geode
               </h3>
               <p className={`text-[13px] text-gray-500 ${mincho.className}`}>
                 Money Attract | Magnetize Money
@@ -262,7 +264,9 @@ const ProductCard = () => {
                 <span className="text-red-600">₹1,899.00</span>
               </div>
 
- <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">                Add to Cart
+              <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
+                {" "}
+                Add to Cart
               </button>
               <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
                 BUY NOW
@@ -271,7 +275,6 @@ const ProductCard = () => {
           </div>
 
           <div className="bg-white overflow-hidden shadow-sm rounded mt-4">
-          
             <div className="relative">
               <Image
                 src="/images/ind1.webp"
@@ -290,14 +293,13 @@ const ProductCard = () => {
               </span>
             </div>
 
-            
-              <div className="p-4 text-center space-y-2">
-             <p className="text-[13px] text-gray-500 mb-0.5">Mindful Living</p>
+            <div className="p-4 text-center space-y-2">
+              <p className="text-[13px] text-gray-500 mb-0.5">Mindful Living</p>
               <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
-             Xtreme Hair Growth Combo
+                Xtreme Hair Growth Combo
               </h3>
               <p className={`text-[13px] text-gray-500 ${mincho.className}`}>
-             REDUCES HAIR FALL
+                REDUCES HAIR FALL
               </p>
 
               <div className="flex justify-center gap-1 text-sm">
@@ -314,7 +316,7 @@ const ProductCard = () => {
                 <span className="text-red-600">₹799.00</span>
               </div>
 
-                 <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
+              <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
                 Add to Cart
               </button>
               <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
@@ -323,8 +325,7 @@ const ProductCard = () => {
             </div>
           </div>
 
-         <div className="bg-white overflow-hidden shadow-sm rounded mt-4">
-          
+          <div className="bg-white overflow-hidden shadow-sm rounded mt-4">
             <div className="relative">
               <Image
                 src="/images/p7.webp"
@@ -343,14 +344,13 @@ const ProductCard = () => {
               </span>
             </div>
 
-            
-              <div className="p-4 text-center space-y-2">
-             <p className="text-[13px] text-gray-500 mb-0.5">Mindful Living</p>
+            <div className="p-4 text-center space-y-2">
+              <p className="text-[13px] text-gray-500 mb-0.5">Mindful Living</p>
               <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
-             Ninja Hair Growth Combo
+                Ninja Hair Growth Combo
               </h3>
               <p className={`text-[13px] text-gray-500 ${mincho.className}`}>
-               PREVENTS HAIR DAMAGE
+                PREVENTS HAIR DAMAGE
               </p>
 
               <div className="flex justify-center gap-1 text-sm">
@@ -367,7 +367,9 @@ const ProductCard = () => {
                 <span className="text-red-600">₹1,760.00</span>
               </div>
 
- <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">                Add to Cart
+              <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
+                {" "}
+                Add to Cart
               </button>
               <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
                 BUY NOW
@@ -376,7 +378,6 @@ const ProductCard = () => {
           </div>
 
           <div className="bg-white overflow-hidden shadow-sm rounded mt-4">
-          
             <div className="relative">
               <Image
                 src="/images/p8.webp"
@@ -395,14 +396,13 @@ const ProductCard = () => {
               </span>
             </div>
 
-            
-              <div className="p-4 text-center space-y-2">
-             <p className="text-[13px] text-gray-500 mb-0.5">Mindful Living</p>
+            <div className="p-4 text-center space-y-2">
+              <p className="text-[13px] text-gray-500 mb-0.5">Mindful Living</p>
               <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
-              Xtreme Pigmentation Combo
+                Xtreme Pigmentation Combo
               </h3>
               <p className={`text-[13px] text-gray-500 ${mincho.className}`}>
-               Reduces Pigmentation | Prevents Wrinkles
+                Reduces Pigmentation | Prevents Wrinkles
               </p>
 
               <div className="flex justify-center gap-1 text-sm">
@@ -419,7 +419,9 @@ const ProductCard = () => {
                 <span className="text-red-600">₹1,899.00</span>
               </div>
 
- <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">                Add to Cart
+              <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
+                {" "}
+                Add to Cart
               </button>
               <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
                 BUY NOW
@@ -428,7 +430,6 @@ const ProductCard = () => {
           </div>
 
           <div className="bg-white overflow-hidden shadow-sm rounded mt-4">
-          
             <div className="relative">
               <Image
                 src="/images/p9.webp"
@@ -447,11 +448,10 @@ const ProductCard = () => {
               </span>
             </div>
 
-            
-              <div className="p-4 text-center space-y-2">
-             <p className="text-[13px] text-gray-500 mb-0.5">Mindful Living</p>
+            <div className="p-4 text-center space-y-2">
+              <p className="text-[13px] text-gray-500 mb-0.5">Mindful Living</p>
               <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
-              Inside Out Hair Care Combo
+                Inside Out Hair Care Combo
               </h3>
               <p className={`text-[13px] text-gray-500 ${mincho.className}`}>
                 STRONG HAIR FOLLICLES
@@ -471,7 +471,9 @@ const ProductCard = () => {
                 <span className="text-red-600">₹1,499.00</span>
               </div>
 
- <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">                Add to Cart
+              <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
+                {" "}
+                Add to Cart
               </button>
               <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
                 BUY NOW
@@ -479,8 +481,7 @@ const ProductCard = () => {
             </div>
           </div>
 
-         <div className="bg-white overflow-hidden shadow-sm rounded mt-4">
-          
+          <div className="bg-white overflow-hidden shadow-sm rounded mt-4">
             <div className="relative">
               <Image
                 src="/images/p10.webp"
@@ -499,11 +500,10 @@ const ProductCard = () => {
               </span>
             </div>
 
-            
-              <div className="p-4 text-center space-y-2">
-             <p className="text-[13px] text-gray-500 mb-0.5">Mindful Living</p>
+            <div className="p-4 text-center space-y-2">
+              <p className="text-[13px] text-gray-500 mb-0.5">Mindful Living</p>
               <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
-             Hair Mist 30 Days Combo
+                Hair Mist 30 Days Combo
               </h3>
               <p className={`text-[13px] text-gray-500 ${mincho.className}`}>
                 IDEAL FOR NEW HAIR REGROWTH
@@ -523,7 +523,9 @@ const ProductCard = () => {
                 <span className="text-red-600">₹1,199.00</span>
               </div>
 
- <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">                Add to Cart
+              <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
+                {" "}
+                Add to Cart
               </button>
               <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
                 BUY NOW
@@ -532,7 +534,6 @@ const ProductCard = () => {
           </div>
 
           <div className="bg-white overflow-hidden shadow-sm rounded mt-4">
-          
             <div className="relative">
               <Image
                 src="/images/p11.webp"
@@ -551,14 +552,13 @@ const ProductCard = () => {
               </span>
             </div>
 
-            
-              <div className="p-4 text-center space-y-2">
-             <p className="text-[13px] text-gray-500 mb-0.5">Mindful Living</p>
+            <div className="p-4 text-center space-y-2">
+              <p className="text-[13px] text-gray-500 mb-0.5">Mindful Living</p>
               <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
-              30 Days Hyaluronic Combo
+                30 Days Hyaluronic Combo
               </h3>
               <p className={`text-[13px] text-gray-500 ${mincho.className}`}>
-               DOUBLE HYDRATION DHAMAKA
+                DOUBLE HYDRATION DHAMAKA
               </p>
 
               <div className="flex justify-center gap-1 text-sm">
@@ -575,7 +575,9 @@ const ProductCard = () => {
                 <span className="text-red-600">₹899.00</span>
               </div>
 
- <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">                Add to Cart
+              <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
+                {" "}
+                Add to Cart
               </button>
               <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
                 BUY NOW
@@ -583,33 +585,27 @@ const ProductCard = () => {
             </div>
           </div>
 
-         <div className="relative h-[98%] rounded-md bg-gradient-to-b from-[#2a2a2a] to-[#1b1b1b] overflow-hidden px-8 py-10 mt-[16px]">
-        
-      
-        <div className="z-10 relative">
-          <h2 className="text-white text-3xl md:text-4xl font-serif leading-tight">
-            Mindful Living <br /> Best Seller
-          </h2>
+          <div className="relative h-[98%] rounded-md bg-gradient-to-b from-[#2a2a2a] to-[#1b1b1b] overflow-hidden px-8 py-10 mt-[16px]">
+            <div className="z-10 relative">
+              <h2 className="text-white text-3xl md:text-4xl font-serif leading-tight">
+                Mindful Living <br /> Best Seller
+              </h2>
 
-          <Link
-            href="/shop"
-            className="inline-block mt-3 text-sm text-white underline underline-offset-4 hover:opacity-80 transition"
-          >
-            Shop all
-          </Link>
-        </div>
+              <Link
+                href="/shop"
+                className="inline-block mt-3 text-sm text-white underline underline-offset-4 hover:opacity-80 transition"
+              >
+                Shop all
+              </Link>
+            </div>
 
-       
-        <button
-          aria-label="Next"
-          className="absolute bottom-6 left-6 w-12 h-12 rounded-full border border-gray-500 flex items-center justify-center text-white hover:bg-white hover:text-black transition cursor-pointer"
-        >
-             <ChevronRight />
-        </button>
-      </div>
-
-
-
+            <button
+              aria-label="Next"
+              className="absolute bottom-6 left-6 w-12 h-12 rounded-full border border-gray-500 flex items-center justify-center text-white hover:bg-white hover:text-black transition cursor-pointer"
+            >
+              <ChevronRight />
+            </button>
+          </div>
         </div>
       </div>
     </section>

@@ -1,6 +1,6 @@
 import AdminDashboard from "@/app/components/admin/dashboard/AdminDashboard";
 
-export default function SignUp() {
+export default function Dashboard() {
     return (
         <main className="wrap">          
             <AdminDashboard />

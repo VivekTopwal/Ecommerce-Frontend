@@ -7,3 +7,36 @@
 }
 
 .container{width: 96%; margin: auto;}
+
+
+.btn-primary {
+  @apply inline-flex items-center gap-2 bg-teal-500 text-white px-4 py-2 rounded-md hover:bg-teal-600;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center gap-2 border px-4 py-2 rounded-md text-gray-600 hover:bg-gray-100;
+}
+
+.btn-danger {
+  @apply inline-flex items-center gap-2 bg-rose-500 text-white px-4 py-2 rounded-md hover:bg-rose-600;
+}
+
+.btn-warning {
+  @apply bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600;
+}
+
+.btn-success {
+  @apply bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600;
+}
+
+.input {
+  @apply border rounded-md px-3 py-2 text-sm w-102;
+}
+
+.badge-success {
+  @apply bg-teal-500 text-white text-xs px-3 py-1 rounded-full;
+}
+
+.toggle {
+  @apply w-10 h-5 bg-green-500 rounded-full relative;
+}

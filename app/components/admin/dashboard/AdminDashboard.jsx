@@ -3,13 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import {
-  LayoutDashboard,
-  ChartBar,
-  Settings,
-  Flower,
-  Users,
-  Compass,
-  User,
+
   Layers,
   ShoppingCart,
   CreditCard,
@@ -17,109 +11,14 @@ import {
   RefreshCcw,
   Truck,
   Check,
-  ChevronRight,
+
 } from "lucide-react";
-import Link from "next/link";
-import LogoutComponent from "@/app/components/logout/LogoutComponent";
 
 const AdminDashboard = () => {
+
   return (
     <div className="flex min-h-screen bg-gray-100">
-      <div className="w-64 bg-white text-black flex flex-col p-6">
-        <div className="flex items-center mb-10">
-          <Flower className="text-orange-500" />
-          <h2 className="text-xl font-bold text-orange-500 font-serif ml-[10px]">
-            Mindful Living
-          </h2>
-        </div>
-
-        <nav className="flex-1">
-          <ul className="space-y-4">
-            <li>
-              <Link
-                href="#"
-                className="flex items-center px-3 py-2 rounded-md bg-gray-100 font-bold text-gray-600"
-              >
-                <LayoutDashboard className="h-5 w-5 mr-3" />
-                Dashboard
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="#"
-                className="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition font-bold text-gray-600"
-              >
-                <ChartBar className="h-5 w-5 mr-3" />
-                Catalog <ChevronRight className="h-5 w-5" />
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="#"
-                className="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition font-bold text-gray-600"
-              >
-                <Users className="h-5 w-5 mr-3" />
-                Customers
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="#"
-                className="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition font-bold text-gray-600"
-              >
-                <Compass className="h-5 w-5 mr-3" />
-                Orders
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="#"
-                className="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition font-bold text-gray-600"
-              >
-                <User className="h-5 w-5 mr-3" />
-                Our Staff
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="#"
-                className="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition font-bold text-gray-600"
-              >
-                <Settings className="h-5 w-5 mr-3" />
-                Settings
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="#"
-                className="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition font-bold text-gray-600"
-              >
-                <Settings className="h-5 w-5 mr-3" />
-                International
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="#"
-                className="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition font-bold text-gray-600"
-              >
-                <Settings className="h-5 w-5 mr-3" />
-                Online Store
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="#"
-                className="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition font-bold text-gray-600"
-              >
-                <Settings className="h-5 w-5 mr-3" />
-                Pages
-              </Link>
-            </li>
-          </ul>
-        </nav>
-      </div>
-
+     
       <div className="flex-1 flex flex-col">
         <header className="flex justify-between items-center bg-white shadow px-6 py-4">
           <Image
@@ -129,7 +28,6 @@ const AdminDashboard = () => {
             height={50}
             priority
           />
-          <LogoutComponent />
         </header>
 
         <main className="flex-1 relative bg-gray-200">
@@ -197,59 +95,55 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-<div className="mt-[40px] mr-[20px] ml-[20px] ">
- <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      
-      <div className="flex items-center gap-4 bg-white rounded-xl shadow-sm p-6">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
-          <ShoppingCart className="text-orange-500" size={22} />
-        </div>
-        <div>
-          <p className="text-gray-500 text-sm">Total Order</p>
-          <p className="text-2xl font-semibold text-gray-600">1291</p>
-        </div>
-      </div>
+          <div className="mt-[40px] mr-[20px] ml-[20px] ">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="flex items-center gap-4 bg-white rounded-xl shadow-sm p-6">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
+                  <ShoppingCart className="text-orange-500" size={22} />
+                </div>
+                <div>
+                  <p className="text-gray-500 text-sm">Total Order</p>
+                  <p className="text-2xl font-semibold text-gray-600">1291</p>
+                </div>
+              </div>
 
-  
-      <div className="flex items-center gap-4 bg-white rounded-xl shadow-sm p-6">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-          <RefreshCcw className="text-blue-500" size={22} />
-        </div>
-        <div>
-          <p className="text-gray-500 text-sm">
-            Orders Pending <span className="text-red-500 font-semibold">(42352.59)</span>
-          </p>
-          <p className="text-2xl font-semibold text-gray-600">84</p>
-        </div>
-      </div>
+              <div className="flex items-center gap-4 bg-white rounded-xl shadow-sm p-6">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
+                  <RefreshCcw className="text-blue-500" size={22} />
+                </div>
+                <div>
+                  <p className="text-gray-500 text-sm">
+                    Orders Pending{" "}
+                    <span className="text-red-500 font-semibold">
+                      (42352.59)
+                    </span>
+                  </p>
+                  <p className="text-2xl font-semibold text-gray-600">84</p>
+                </div>
+              </div>
 
-  
-      <div className="flex items-center gap-4 bg-white rounded-xl shadow-sm p-6">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
-          <Truck className="text-emerald-500" size={22} />
-        </div>
-        <div>
-          <p className="text-gray-500 text-sm">Orders Processing</p>
-          <p className="text-2xl font-semibold text-gray-600">23</p>
-        </div>
-      </div>
+              <div className="flex items-center gap-4 bg-white rounded-xl shadow-sm p-6">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
+                  <Truck className="text-emerald-500" size={22} />
+                </div>
+                <div>
+                  <p className="text-gray-500 text-sm">Orders Processing</p>
+                  <p className="text-2xl font-semibold text-gray-600">23</p>
+                </div>
+              </div>
 
-    
-      <div className="flex items-center gap-4 bg-white rounded-xl shadow-sm p-6">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-          <Check className="text-green-500" size={22} />
-        </div>
-        <div>
-          <p className="text-gray-500 text-sm">Orders Delivered</p>
-          <p className="text-2xl font-semibold text-gray-600">95</p>
-        </div>
-      </div>
-
-    </div>
-</div>
-
-
-
+              <div className="flex items-center gap-4 bg-white rounded-xl shadow-sm p-6">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                  <Check className="text-green-500" size={22} />
+                </div>
+                <div>
+                  <p className="text-gray-500 text-sm">Orders Delivered</p>
+                  <p className="text-2xl font-semibold text-gray-600">95</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
         </main>
       </div>
     </div>
