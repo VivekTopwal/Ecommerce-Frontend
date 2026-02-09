@@ -1,5 +1,4 @@
 "use client";
-
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -7,32 +6,35 @@ import { useParams } from "next/navigation";
 import { Heart, ShoppingCart, Minus, Plus, Star } from "lucide-react";
 import { Shippori_Mincho } from "next/font/google";
 import { useRouter } from "next/navigation";
+import { useShop } from "@/app/context/ShopContext";
 
 const mincho = Shippori_Mincho({
   subsets: ["latin"],
   weight: ["400", "600"],
 });
 
-export default function ProductDetails() {
+export default function ProductDetail() {
   const router = useRouter();
-  const handlePage = () => {
-    router.push("/");
-  };
-
   const { slug } = useParams();
+  const { addToCart, toggleWishlist, isInWishlist } = useShop();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [addingToCart, setAddingToCart] = useState(false); // Separate state for Add to Cart
+  const [buyingNow, setBuyingNow] = useState(false); // Separate state for Buy Now
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(null);
   const [images, setImages] = useState([]);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+
+  const handlePage = () => {
+    router.push("/");
+  };
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/products/${slug}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/admin/products/${slug}`,
         );
         const data = await res.json();
 
@@ -57,23 +59,6 @@ export default function ProductDetails() {
     if (slug) fetchProduct();
   }, [slug]);
 
-  const handleQuantityChange = (type) => {
-    if (!product) return;
-
-    if (type === "increase" && quantity < product.quantity) {
-      setQuantity((prev) => prev + 1);
-    }
-    if (type === "decrease" && quantity > 1) {
-      setQuantity((prev) => prev - 1);
-    }
-  };
-
-  // Toggle wishlist
-  const toggleWishlist = () => {
-    setIsWishlisted(!isWishlisted);
-    // Here you can add API call to save wishlist
-  };
-
   const calculateDiscount = () => {
     if (product.productPrice > product.salePrice) {
       return Math.round(
@@ -82,6 +67,41 @@ export default function ProductDetails() {
       );
     }
     return 0;
+  };
+
+  const handleQuantityChange = (action) => {
+    if (action === "increase" && quantity < product.quantity) {
+      setQuantity(prev => prev + 1);
+    } else if (action === "decrease" && quantity > 1) {
+      setQuantity(prev => prev - 1);
+    }
+  };
+
+  const handleAddToCart = async () => {
+    setAddingToCart(true);
+    const result = await addToCart(product._id, quantity);
+    
+    if (result.success) {
+      // Optional: Reset quantity after adding
+      // setQuantity(1);
+    }
+    setAddingToCart(false);
+  };
+
+  const handleBuyNow = async () => {
+    setBuyingNow(true);
+    const result = await addToCart(product._id, quantity);
+    
+    if (result.success) {
+      router.push("/checkout");
+    } else {
+      alert(result.message || "Failed to proceed");
+    }
+    setBuyingNow(false);
+  };
+
+  const handleToggleWishlist = async () => {
+    await toggleWishlist(product._id);
   };
 
   if (loading) {
@@ -103,7 +123,7 @@ export default function ProductDetails() {
             Product Not Found
           </h1>
           <p className="text-gray-600 text-base">
-            Sorry, the product you’re looking for is unavailable or may have
+            Sorry, the product you're looking for is unavailable or may have
             been removed.
           </p>
         </div>
@@ -120,17 +140,15 @@ export default function ProductDetails() {
   }
 
   const discount = calculateDiscount();
+  const isWishlisted = isInWishlist(product._id);
 
   return (
     <section className="bg-gray-50 min-h-screen py-8">
-      <div className="container mx-auto px-4 max-w-7xl">
-        <nav className="mb-6 text-sm text-gray-600" aria-label="Breadcrumb">
-          <ol className="flex items-center flex-wrap gap-1">
+      <div className="container mx-auto px-4">
+        <nav className="mb-6">
+          <ol className="flex items-center space-x-2 text-sm text-gray-600">
             <li>
-              <Link
-                href="/"
-                className="hover:text-orange-500 transition-colors"
-              >
+              <Link href="/" className="hover:text-orange-500 transition-colors">
                 Home
               </Link>
             </li>
@@ -159,6 +177,7 @@ export default function ProductDetails() {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 bg-white rounded-lg shadow-sm p-6 lg:p-8">
+          {/* Image Section */}
           <div className="space-y-4">
             <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
               {activeImage && (
@@ -178,7 +197,7 @@ export default function ProductDetails() {
               )}
 
               <button
-                onClick={toggleWishlist}
+                onClick={handleToggleWishlist}
                 className={`absolute top-4 right-4 w-11 h-11 rounded-full shadow-lg flex items-center justify-center transition-all duration-200 ${
                   isWishlisted
                     ? "bg-red-500 text-white"
@@ -216,6 +235,7 @@ export default function ProductDetails() {
             )}
           </div>
 
+          {/* Product Info Section */}
           <div className="space-y-6">
             <div>
               <p className="text-sm text-orange-500 font-semibold uppercase tracking-wider mb-2">
@@ -239,12 +259,10 @@ export default function ProductDetails() {
               </span>
             </div>
 
-            {/* Description */}
             <p className="text-gray-600 text-base leading-relaxed">
               {product.description}
             </p>
 
-            {/* Price Section */}
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <div className="flex items-baseline gap-3 flex-wrap">
                 <span
@@ -294,7 +312,7 @@ export default function ProductDetails() {
                   <div className="flex items-center border-2 border-gray-300 rounded-lg overflow-hidden">
                     <button
                       onClick={() => handleQuantityChange("decrease")}
-                      className="px-4 py-3 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer "
+                      className="px-4 py-3 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                       disabled={quantity <= 1}
                     >
                       <Minus size={18} />
@@ -319,18 +337,20 @@ export default function ProductDetails() {
 
             <div className="space-y-3 pt-4">
               <button
+                onClick={handleBuyNow}
+                disabled={buyingNow || product.quantity === 0}
                 className="w-full bg-gradient-to-r from-orange-400 to-orange-500 text-white py-4 rounded-lg font-semibold text-lg hover:from-orange-500 hover:to-orange-600 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={product.quantity === 0}
               >
-                BUY NOW
+                {buyingNow ? "Processing..." : "BUY NOW"}
               </button>
 
               <button
+                onClick={handleAddToCart}
+                disabled={addingToCart || product.quantity === 0}
                 className="w-full border-2 border-gray-800 py-4 rounded-lg font-semibold text-lg hover:bg-gray-800 hover:text-white transition-all duration-200 flex justify-center items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={product.quantity === 0}
               >
                 <ShoppingCart size={22} />
-                Add to Cart
+                {addingToCart ? "Adding..." : "Add to Cart"}
               </button>
             </div>
 

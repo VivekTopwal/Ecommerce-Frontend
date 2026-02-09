@@ -111,7 +111,6 @@ const AddProductPage = () => {
           </div>
 
           <div className="space-y-8">
-            {/* Main Image */}
             <div className="grid grid-cols-12 gap-6 items-start">
               <label className="col-span-12 md:col-span-3 text-[16px] font-semibold text-gray-800 pt-2">
                 Main Image
@@ -174,7 +173,7 @@ const AddProductPage = () => {
               </div>
             </div>
 
-            {/* Feature Images */}
+        
             <div className="grid grid-cols-12 gap-6 items-start">
               <label className="col-span-12 md:col-span-3 text-[16px] font-semibold text-gray-800 pt-2">
                 Feature Images

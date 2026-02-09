@@ -1,103 +1,107 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
+
 import Link from "next/link";
 import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { Shield } from "lucide-react";
 
-export default function LoginFormComponent() {
+export default function AdminLoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { adminLogin } = useAuth();
   
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    rememberMe: false,
   });
   
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     }));
+    setError(""); 
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
+
+    console.log("🔐 Attempting admin login with:", formData.email);
 
     try {
-      const result = await login(formData.email, formData.password);
+      const result = await adminLogin(formData.email, formData.password);
+
+      console.log("Login result:", result);
 
       if (result.success) {
-        toast.success("Login successful!");
-        
-        // Redirect based on user role
-        if (result.user.role === "admin") {
-          router.push("/admin");
-        } else {
-          router.push("/");
-        }
+        toast.success("Admin login successful!");
+        console.log("Redirecting to admin dashboard...");
+        router.push("/admin/dashboard");
       } else {
-        toast.error(result.message || "Login failed");
+        const errorMsg = result.message || "Invalid admin credentials";
+        console.error("Login failed:", errorMsg);
+        setError(errorMsg);
+        toast.error(errorMsg);
       }
     } catch (error) {
-      console.error("Login error:", error);
-      toast.error("An error occurred during login");
+      console.error("Admin login error:", error);
+      const errorMsg = "An error occurred during login. Check console for details.";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-8">
         <div className="text-center">
-          <Link href="/">
-            <Image
-              className="h-20 w-auto mx-auto cursor-pointer"
-              width={120}
-              height={80}
-              src="/images/store-logo.png"
-              alt="Store Logo"
-            />
-          </Link>
+          <div className="flex justify-center mb-4">
+            <div className="bg-indigo-100 dark:bg-indigo-900 p-3 rounded-full">
+              <Shield className="w-12 h-12 text-indigo-600 dark:text-indigo-400" />
+            </div>
+          </div>
 
-          <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Sign in to your account
+          <h2 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+            Admin Login
           </h2>
 
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/register"
-              className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
-            >
-              Sign Up →
-            </Link>
+            Secure access for administrators only
           </p>
         </div>
 
+   
+        {error && (
+          <div className="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <p className="text-sm">{error}</p>
+          </div>
+        )}
+
         <form className="space-y-6 mt-8" onSubmit={handleSubmit}>
-          {/* Email Field */}
+       
           <div>
             <label
               htmlFor="email"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              Email address
+              Admin Email
             </label>
             <input
               id="email"
               name="email"
               type="email"
               autoComplete="email"
-              placeholder="your@email.com"
+              placeholder="admin@store.com"
               required
               autoFocus
               value={formData.email}
@@ -109,7 +113,6 @@ export default function LoginFormComponent() {
             />
           </div>
 
-          {/* Password Field */}
           <div>
             <label
               htmlFor="password"
@@ -133,41 +136,14 @@ export default function LoginFormComponent() {
             />
           </div>
 
-          {/* Remember Me & Forgot Password */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="rememberMe"
-                name="rememberMe"
-                type="checkbox"
-                checked={formData.rememberMe}
-                onChange={handleChange}
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
-              />
-              <label
-                htmlFor="rememberMe"
-                className="ml-2 block text-sm text-gray-900 dark:text-gray-300 cursor-pointer"
-              >
-                Remember me
-              </label>
-            </div>
-
-            <Link
-              href="/forgot-password"
-              className="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
-            >
-              Forgot password?
-            </Link>
-          </div>
-
-          {/* Submit Button */}
+    
           <button
             type="submit"
             disabled={loading}
             className="w-full inline-flex justify-center items-center rounded-md
               bg-indigo-600 px-4 py-3 text-base font-semibold text-white
               hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
-              disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? (
               <>
@@ -194,11 +170,22 @@ export default function LoginFormComponent() {
                 Signing in...
               </>
             ) : (
-              "Sign in"
+              "Sign in as Admin"
             )}
           </button>
         </form>
 
+        <div className="mt-6 space-y-2">
+          <p className="text-xs text-center text-gray-500">
+            Default credentials: admin@store.com / admin123
+          </p>
+          <Link
+            href="/login"
+            className="text-sm text-center block text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+          >
+            ← Back to user login
+          </Link>
+        </div>
       </div>
     </div>
   );

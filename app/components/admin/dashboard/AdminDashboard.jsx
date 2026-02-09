@@ -20,16 +20,6 @@ const AdminDashboard = () => {
     <div className="flex min-h-screen bg-gray-100">
      
       <div className="flex-1 flex flex-col">
-        <header className="flex justify-between items-center bg-white shadow px-6 py-4">
-          <Image
-            src="/images/store-logo.png"
-            alt="Company Logo"
-            width={120}
-            height={50}
-            priority
-          />
-        </header>
-
         <main className="flex-1 relative bg-gray-200">
           <div>
             <h2 className="pl-5 pt-5 pb-5 font-bold font-sans text-[25px]">

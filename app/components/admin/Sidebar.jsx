@@ -94,7 +94,7 @@ const Sidebar = () => {
 
                 <li>
                   <Link
-                    href="/categories"
+                    href="/admin/categories"
                      onClick={() => setUserToggled(true)}
                     className={`flex items-center px-3 py-2 text-sm rounded-md font-bold transition
                       ${
@@ -112,10 +112,10 @@ const Sidebar = () => {
           </li>
 
           {[
-            { href: "/customers", label: "Customers", icon: Users },
-            { href: "/orders", label: "Orders", icon: Compass },
-            { href: "/staff", label: "Our Staff", icon: User },
-            { href: "/settings", label: "Settings", icon: Settings },
+            { href: "/admin/customers", label: "Customers", icon: Users },
+            { href: "/admin/orders", label: "Orders", icon: Compass },
+            { href: "/admin/staff", label: "Our Staff", icon: User },
+            { href: "/admin/settings", label: "Settings", icon: Settings },
           ].map(({ href, label, icon: Icon }) => (
             <li key={href}>
               <Link

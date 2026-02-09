@@ -1,19 +1,15 @@
 "use client";
-import { Plus, Trash2, SquarePen, Eye, ChevronDown, Search } from "lucide-react";
+import { Plus, Trash2, SquarePen, Eye, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import Image from "next/image";
 
-export default function ProductsPage() {
+export default function AdminCategoryPage() {
   const router = useRouter();
 
-  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("");
-  const [priceSort, setPriceSort] = useState("");
   const [selected, setSelected] = useState([]);
-  
- 
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({
     totalDocs: 0,
@@ -24,44 +20,44 @@ export default function ProductsPage() {
     hasPrevPage: false,
   });
 
-  const [limit] = useState(10); 
+  const [limit] = useState(10);
 
-  const fetchProducts = useCallback(async (page = 1) => {
+  const fetchCategories = useCallback(async (page = 1) => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/products?page=${page}&limit=${limit}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/categories?page=${page}&limit=${limit}`,
         {
           cache: "no-store",
         }
       );
 
       const data = await res.json();
-      const productsArray = data?.products || [];
+      const categoriesArray = data?.categories || [];
 
-      setProducts(productsArray);
+      setCategories(categoriesArray);
       setPagination(data?.pagination || {});
       setCurrentPage(page);
     } catch (err) {
       console.error(err);
-      setProducts([]);
+      setCategories([]);
     }
   }, [limit]);
 
   useEffect(() => {
-    fetchProducts(1);
+    fetchCategories(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchCategories]);
 
   const togglePublish = async (id) => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/products/${id}/publish`,
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/categories/${id}/publish`,
         { method: "PATCH" }
       );
 
       if (res.ok) {
-        setProducts(prev => prev.map(p => 
-          p._id === id ? { ...p, isPublished: !p.isPublished } : p
+        setCategories(prev => prev.map(c => 
+          c._id === id ? { ...c, isPublished: !c.isPublished } : c
         ));
       } else {
         alert("Failed to update publish status");
@@ -73,65 +69,19 @@ export default function ProductsPage() {
   };
 
   const filtered = useMemo(() => {
-    let temp = [...products];
+    let temp = [...categories];
 
     if (search) {
-      temp = temp.filter((p) =>
-        p.name?.toLowerCase().includes(search.toLowerCase()),
+      temp = temp.filter((c) =>
+        c.name?.toLowerCase().includes(search.toLowerCase()),
       );
-    }
-    
-    if (category && category !== "ALL") {
-      temp = temp.filter((p) => p.category === category);
-    }
-
-    if (priceSort === "price_low") {
-      temp.sort((a, b) => a.productPrice - b.productPrice);
-    }
-
-    if (priceSort === "price_high") {
-      temp.sort((a, b) => b.productPrice - a.productPrice);
-    }
-
-    if (priceSort === "published") {
-      temp = temp.filter((p) => p.isPublished === true);
-    }
-
-    if (priceSort === "unpublished") {
-      temp = temp.filter((p) => p.isPublished === false);
-    }
-
-    if (priceSort === "selling") {
-      temp = temp.filter((p) => p.quantity > 0);
-    }
-
-    if (priceSort === "quantity") {
-      temp = temp.filter((p) => p.quantity === 0);
-    }
-
-    if (priceSort === "created_asc") {
-      temp.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-    }
-
-    if (priceSort === "created_desc") {
-      temp.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    }
-
-    if (priceSort === "updated_asc") {
-      temp.sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
-    }
-
-    if (priceSort === "updated_desc") {
-      temp.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
     }
 
     return temp;
-  }, [products, search, category, priceSort]);
+  }, [categories, search]);
 
   const resetFilters = () => {
     setSearch("");
-    setCategory("");
-    setPriceSort("");
   };
 
   const toggleSelect = (id) => {
@@ -144,62 +94,62 @@ export default function ProductsPage() {
     if (selected.length === filtered.length) {
       setSelected([]);
     } else {
-      setSelected(filtered.map((p) => p._id));
+      setSelected(filtered.map((c) => c._id));
     }
   };
 
-  const deleteProduct = async (id) => {
-    if (!confirm("Delete this product?")) return;
+  const deleteCategory = async (id) => {
+    if (!confirm("Delete this category?")) return;
 
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/products/${id}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/categories/${id}`, {
         method: "DELETE",
       });
 
-      fetchProducts(currentPage);
+      fetchCategories(currentPage);
     } catch (error) {
-      console.error("Error deleting product:", error);
-      alert("Failed to delete product");
+      console.error("Error deleting category:", error);
+      alert("Failed to delete category");
     }
   };
 
   const handleBulkDelete = async () => {
     if (selected.length === 0) return;
-    if (!confirm("Delete selected products?")) return;
+    if (!confirm("Delete selected categories?")) return;
 
     try {
       await Promise.all(
         selected.map((id) =>
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/products/${id}`, {
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/categories/${id}`, {
             method: "DELETE",
           }),
         ),
       );
 
       setSelected([]);
-      fetchProducts(currentPage);
+      fetchCategories(currentPage);
     } catch (error) {
-      console.error("Error deleting products:", error);
-      alert("Failed to delete products");
+      console.error("Error deleting categories:", error);
+      alert("Failed to delete categories");
     }
   };
 
-  const handleView = (slug) => {
-    router.push(`/admin/product/${slug}`);
+  const handleView = (id) => {
+    router.push(`/admin/category/${id}`);
   };
 
-  const handleEdit = (slug) => {
-    router.push(`/admin/edit-product/${slug}`);
+  const handleEdit = (id) => {
+    router.push(`/admin/edit-category/${id}`);
   };
 
-  const handleAddProduct = () => {
-    router.push("/admin/add-product");
+  const handleAddCategory = () => {
+    router.push("/admin/add-category");
   };
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= pagination.totalPages) {
-      fetchProducts(page);
-      setSelected([]); 
+      fetchCategories(page);
+      setSelected([]);
     }
   };
 
@@ -249,22 +199,20 @@ export default function ProductsPage() {
     <div className="p-6 bg-[#f7f7f5] min-h-screen">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold"></h1>
+
         <div className="flex gap-2">
           <button
             onClick={handleBulkDelete}
-            className="btn-danger cursor-pointer disabled:opacity-50
-                         disabled:cursor-not-allowed
-                         disabled:bg-red-300
-                         disabled:text-white"
+            className="btn-danger cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-red-300 disabled:text-white"
             disabled={selected.length === 0}
           >
             <Trash2 size={16} /> Delete
           </button>
           <button
-            onClick={handleAddProduct}
+            onClick={handleAddCategory}
             className="btn-primary cursor-pointer"
           >
-            <Plus size={16} /> Add Product
+            <Plus size={16} /> Add Category
           </button>
         </div>
       </div>
@@ -275,59 +223,15 @@ export default function ProductsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             type="text"
-            placeholder="Search Product"
-            className="input w-83!"
+            placeholder="Search by category name"
+            className="input w-83"
           />
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 cursor-pointer hover:text-gray-700" />
-        </div>
-
-        <div className="relative">
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="input w-83! appearance-none pr-10 cursor-pointer"
-          >
-            <option value="">Category</option>
-            <option value="ALL">All</option>
-            <option value="Haircare">Haircare</option>
-            <option value="Skincare">Skincare</option>
-            <option value="Crystals">Crystals</option>
-          </select>
-
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
-        </div>
-
-        <div className="relative">
-          <select
-            value={priceSort}
-            onChange={(e) => setPriceSort(e.target.value)}
-            className="input w-83! appearance-none pr-10 cursor-pointer"
-          >
-            <option value="">Price</option>
-
-            <option value="price_low">Low to High</option>
-            <option value="price_high">High to Low</option>
-
-            <option value="published">Published</option>
-            <option value="unpublished">Unpublished</option>
-
-            <option value="selling">Status - Selling</option>
-            <option value="quantity">Status - Out of Stock</option>
-
-            <option value="created_asc">Date Added (Asc)</option>
-            <option value="created_desc">Date Added (Desc)</option>
-
-            <option value="updated_asc">Date Updated (Asc)</option>
-            <option value="updated_desc">Date Updated (Desc)</option>
-          </select>
-
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
         </div>
 
         <button onClick={resetFilters} className="btn-secondary cursor-pointer">
           Reset
         </button>
-
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-x-auto">
@@ -343,13 +247,9 @@ export default function ProductsPage() {
                   onChange={toggleSelectAll}
                 />
               </th>
-              <th className="px-4 py-3 text-left">PRODUCT NAME</th>
-              <th className="px-4 py-3 text-center">CATEGORY</th>
-              <th className="px-4 py-3 text-center">PRICE</th>
-              <th className="px-4 py-3 text-center">SALE PRICE</th>
-              <th className="px-4 py-3 text-center">STOCK</th>
-              <th className="px-4 py-3 text-center">STATUS</th>
-              <th className="px-4 py-3 text-center">VIEW</th>
+              <th className="px-4 py-3 text-left">CATEGORY</th>
+              <th className="px-4 py-3 text-center">ICON</th>
+              <th className="px-4 py-3 text-center">DESCRIPTION</th>
               <th className="px-4 py-3 text-center">PUBLISHED</th>
               <th className="px-4 py-3 text-center">ACTIONS</th>
             </tr>
@@ -358,8 +258,8 @@ export default function ProductsPage() {
           <tbody className="divide-y">
             {filtered.length > 0 ? (
               filtered.map((item) => (
-                <tr 
-                  key={item._id} 
+                <tr
+                  key={item._id}
                   className={`hover:bg-gray-50 ${!item.isPublished ? 'opacity-60 bg-gray-50' : ''}`}
                 >
                   <td className="px-4 py-3 align-middle">
@@ -371,47 +271,28 @@ export default function ProductsPage() {
                   </td>
 
                   <td className="px-4 py-3 align-middle">
-                    <div className="flex items-center gap-2">
-                      <Image
-                        src={item.mainImage || "/images/empty.jpg"}
-                        width={100}
-                        height={100}
-                        alt={item.name}
-                        className="w-10 h-10 rounded object-cover"
-                      />
-                      {item.name}
-                    </div>
+                    <div className="font-medium">{item.name}</div>
                   </td>
-
-                  <td className="px-4 py-3 text-center align-middle">{item.category}</td>
-                  <td className="px-4 py-3 text-center font-semibold align-middle">
-                    ${item.productPrice}
-                  </td>
-                  <td className="px-4 py-3 text-center font-semibold align-middle">
-                    ${item.salePrice}
-                  </td>
-                  <td className="px-4 py-3 text-center align-middle">{item.quantity}</td>
 
                   <td className="px-4 py-3 text-center align-middle">
-                    {item.quantity > 0 ? (
-                      <span className="badge-success">Selling</span>
+                    {item.icon ? (
+                      <div className="flex justify-center">
+                        <Image
+                          src={item.icon}
+                          width={40}
+                          height={40}
+                          alt={item.name}
+                          className="w-10 h-10 rounded object-cover"
+                        />
+                      </div>
                     ) : (
-                      <span className="px-2 py-1 text-xs font-semibold rounded bg-red-100 text-red-700">
-                        Out of Stock
-                      </span>
+                      <span className="text-gray-400 text-xs">No icon</span>
                     )}
                   </td>
 
-                  <td className="px-4 py-3 text-center align-middle">
-                    <div className="relative group inline-block">
-                      <Eye
-                        size={16}
-                        className="mx-auto text-gray-500 cursor-pointer hover:text-blue-600 transition-colors"
-                        onClick={() => handleView(item.slug)}
-                      />
-                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-600 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                        View
-                      </span>
+                  <td className="px-4 py-3 text-center align-middle max-w-xs">
+                    <div className="truncate" title={item.description}>
+                      {item.description || '-'}
                     </div>
                   </td>
 
@@ -430,10 +311,20 @@ export default function ProductsPage() {
                   <td className="px-4 py-3 align-middle">
                     <div className="flex justify-center gap-3">
                       <div className="relative group">
+                        <Eye
+                          size={20}
+                          className="text-gray-500 cursor-pointer hover:text-green-600 transition-colors"
+                          onClick={() => handleView(item._id)}
+                        />
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-600 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                          View
+                        </span>
+                      </div>
+                      <div className="relative group">
                         <SquarePen
                           size={20}
                           className="text-gray-500 cursor-pointer hover:text-blue-600 transition-colors"
-                          onClick={() => handleEdit(item.slug)}
+                          onClick={() => handleEdit(item._id)}
                         />
                         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-blue-500 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                           Edit
@@ -443,7 +334,7 @@ export default function ProductsPage() {
                         <Trash2
                           size={20}
                           className="text-gray-500 cursor-pointer hover:text-red-600 transition-colors"
-                          onClick={() => deleteProduct(item._id)}
+                          onClick={() => deleteCategory(item._id)}
                         />
                         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-red-500 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                           Delete
@@ -455,8 +346,8 @@ export default function ProductsPage() {
               ))
             ) : (
               <tr>
-                <td colSpan="10" className="text-center py-6 text-gray-500">
-                  No products found
+                <td colSpan="6" className="text-center py-6 text-gray-500">
+                  No categories found
                 </td>
               </tr>
             )}
@@ -467,7 +358,7 @@ export default function ProductsPage() {
           <div className="text-sm text-gray-600">
             Page {currentPage} of {pagination.totalPages}
           </div>
-          
+
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrevious}
