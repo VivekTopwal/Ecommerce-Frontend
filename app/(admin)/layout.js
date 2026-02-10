@@ -15,6 +15,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import { Toaster } from 'react-hot-toast';
 
 export default function AdminLayout({ children }) {
   const router = useRouter();
@@ -184,7 +185,50 @@ export default function AdminLayout({ children }) {
           </div>
         </header>
 
-        <main className="p-0">{children}</main>
+        <main className="p-0">
+          {children}
+   <Toaster
+  position="top-center"
+  reverseOrder={false}
+  toastOptions={{
+    duration: 3500,
+    style: {
+      background: "rgba(15, 23, 42, 0.95)", 
+      color: "#f8fafc",
+      padding: "12px 16px",
+      borderRadius: "12px",
+      fontSize: "14px",
+      fontWeight: 500,
+      boxShadow:
+        "0 10px 25px rgba(0,0,0,0.25), 0 4px 10px rgba(0,0,0,0.15)",
+      backdropFilter: "blur(8px)",
+    },
+
+    success: {
+      iconTheme: {
+        primary: "#22c55e",
+        secondary: "#f8fafc",
+      },
+    },
+
+    error: {
+      duration: 4500,
+      iconTheme: {
+        primary: "#ef4444", 
+        secondary: "#f8fafc",
+      },
+    },
+
+    loading: {
+      iconTheme: {
+        primary: "#38bdf8", 
+        secondary: "#0f172a",
+      },
+    },
+  }}
+/>
+
+          </main>
       </div>
 
       {sidebarOpen && (

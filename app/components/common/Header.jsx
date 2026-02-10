@@ -8,8 +8,9 @@ import { User, Heart, ShoppingCart, LogOut } from "lucide-react";
 import { useShop } from "@/app/context/ShopContext";
 import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { memo } from "react";
 
-export default function Header() {
+function Header() {
   const router = useRouter();
   const { cart, wishlist } = useShop();
   const { user, isAuthenticated, logout } = useAuth();
@@ -18,6 +19,9 @@ export default function Header() {
     logout();
     router.push("/");
   };
+
+  const cartCount = cart?.totalItems || 0;
+  const wishlistCount = wishlist?.products?.length || 0;
 
   return (
     <>
@@ -36,6 +40,7 @@ export default function Header() {
           </div>
           <Search />
           <div className="flex items-center gap-5">
+          
             {isAuthenticated() ? (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
@@ -46,7 +51,7 @@ export default function Header() {
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2 hover:text-primary font-serif text-[17px] cursor-pointer"
+                  className="flex items-center gap-2 hover:text-primary font-serif text-[17px] transition-colors"
                 >
                   <LogOut size={20} />
                   Logout
@@ -56,7 +61,7 @@ export default function Header() {
               <div className="flex items-center gap-3">
                 <Link
                   href={"/login"}
-                  className="hover:text-primary font-serif text-[18px]"
+                  className="hover:text-primary font-serif text-[18px] transition-colors"
                 >
                   Login
                 </Link>
@@ -64,7 +69,7 @@ export default function Header() {
                 <span>|</span>
                 <Link
                   href={"/register"}
-                  className="hover:text-primary font-serif text-[18px]"
+                  className="hover:text-primary font-serif text-[18px] transition-colors"
                 >
                   Register
                 </Link>
@@ -72,27 +77,28 @@ export default function Header() {
             )}
 
             <div className="flex items-center gap-6">
+        
               <Link href="/wishlist">
                 <div className="relative w-10 h-10 flex items-center justify-center group">
-                  {wishlist?.products?.length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-[#DC2626] min-w-5 h-5 px-1 text-white text-xs rounded-full flex items-center justify-center font-semibold">
-                      {wishlist.products.length}
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-[#DC2626] min-w-5 h-5 px-1 text-white text-xs rounded-full flex items-center justify-center font-semibold animate-pulse">
+                      {wishlistCount}
                     </span>
                   )}
                   <Heart
                     size={32}
                     className="text-gray-700 group-hover:text-primary transition-colors"
-                    fill={wishlist?.products?.length > 0 ? "#DC2626" : "none"}
+                    fill={wishlistCount > 0 ? "#DC2626" : "none"}
                   />
                 </div>
               </Link>
 
-              {/* Cart */}
+
               <Link href="/cart">
                 <div className="relative w-10 h-10 flex items-center justify-center group">
-                  {cart?.totalItems > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-[#DC2626] min-w-5 h-5 px-1 text-white text-xs rounded-full flex items-center justify-center font-semibold">
-                      {cart.totalItems}
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-[#DC2626] min-w-5 h-5 px-1 text-white text-xs rounded-full flex items-center justify-center font-semibold animate-pulse">
+                      {cartCount}
                     </span>
                   )}
                   <ShoppingCart
@@ -109,3 +115,5 @@ export default function Header() {
     </>
   );
 }
+
+export default memo(Header);

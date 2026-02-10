@@ -41,5 +41,19 @@
   @apply w-10 h-5 bg-green-500 rounded-full relative;
 }
 
+@keyframes badge-pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
 
+.badge-update {
+  animation: badge-pop 0.3s ease-in-out;
+}
 

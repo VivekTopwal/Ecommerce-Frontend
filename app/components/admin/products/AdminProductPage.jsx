@@ -3,16 +3,24 @@ import { Plus, Trash2, SquarePen, Eye, ChevronDown, Search } from "lucide-react"
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import Image from "next/image";
+import { useAuth } from "@/app/context/AuthContext";
+import toast from "react-hot-toast";
 
 export default function ProductsPage() {
   const router = useRouter();
+  const { token, isAuthenticated, isAdmin } = useAuth();
+  const getAuthHeaders = () => {
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  };
 
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [priceSort, setPriceSort] = useState("");
   const [selected, setSelected] = useState([]);
-  
  
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({
@@ -31,9 +39,19 @@ export default function ProductsPage() {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/admin/products?page=${page}&limit=${limit}`,
         {
+        headers: getAuthHeaders(),
           cache: "no-store",
         }
       );
+
+          if (!res.ok) {
+          if (res.status === 401) {
+            toast.error("Session expired. Please login again.");
+            router.push("/admin/login");
+            return;
+          }
+          throw new Error("Failed to fetch products");
+        }
 
       const data = await res.json();
       const productsArray = data?.products || [];
@@ -43,34 +61,53 @@ export default function ProductsPage() {
       setCurrentPage(page);
     } catch (err) {
       console.error(err);
+        toast.error("Failed to load products");
       setProducts([]);
     }
-  }, [limit]);
+  }, [limit, token, isAuthenticated, isAdmin]);
 
   useEffect(() => {
-    fetchProducts(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const togglePublish = async (id) => {
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/products/${id}/publish`,
-        { method: "PATCH" }
-      );
-
-      if (res.ok) {
-        setProducts(prev => prev.map(p => 
-          p._id === id ? { ...p, isPublished: !p.isPublished } : p
-        ));
-      } else {
-        alert("Failed to update publish status");
-      }
-    } catch (error) {
-      console.error("Error toggling publish status:", error);
-      alert("Failed to update publish status");
+    if (isAuthenticated() && isAdmin()) {
+      fetchProducts(1);
+       // eslint-disable-next-line react-hooks/exhaustive-deps
     }
-  };
+  }, [fetchProducts, isAuthenticated, isAdmin]);
+
+const togglePublish = async (id) => {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/admin/products/${id}/publish`,
+      { 
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error("Failed to update publish status");
+    }
+
+    const data = await res.json();
+
+    // Update the product in state immediately
+    setProducts((prev) =>
+      prev.map((p) =>
+        p._id === id ? { ...p, isPublished: data.isPublished } : p
+      )
+    );
+    
+    // Show frontend toast
+    toast.success(
+      data.isPublished ? "Product published" : "Product unpublished"
+    );
+
+  } catch (error) {
+    console.error("Error toggling publish status:", error);
+    toast.error("Failed to update publish status");
+  }
+};
 
   const filtered = useMemo(() => {
     let temp = [...products];
@@ -148,41 +185,127 @@ export default function ProductsPage() {
     }
   };
 
-  const deleteProduct = async (id) => {
-    if (!confirm("Delete this product?")) return;
+const deleteProduct = (id) => {
+  toast(
+    (t) => (
+      <div className="flex flex-col gap-2">
+        <p className="text-sm">
+          Are you sure you want to delete this product?
+        </p>
 
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/products/${id}`, {
-        method: "DELETE",
-      });
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              const loadingToast = toast.loading("Deleting product...");
 
-      fetchProducts(currentPage);
-    } catch (error) {
-      console.error("Error deleting product:", error);
-      alert("Failed to delete product");
+              try {
+                const res = await fetch(
+                  `${process.env.NEXT_PUBLIC_API_URL}/admin/products/${id}`,
+                  {
+                    method: "DELETE",
+                    headers: getAuthHeaders(),
+                  }
+                );
+
+                if (!res.ok) {
+                  throw new Error("Failed to delete product");
+                }
+
+                toast.dismiss(loadingToast);
+                toast.success("Product deleted successfully");
+                fetchProducts(currentPage);
+              } catch (error) {
+                toast.dismiss(loadingToast);
+                toast.error("Failed to delete product");
+                console.error("Error deleting product:", error);
+              }
+            }}
+            className="px-3 py-1 text-sm bg-red-600 text-white rounded"
+          >
+            Delete
+          </button>
+
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1 text-sm bg-gray-200 text-black rounded"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ),
+    {
+      duration: Infinity,
     }
-  };
+  );
+};
 
-  const handleBulkDelete = async () => {
-    if (selected.length === 0) return;
-    if (!confirm("Delete selected products?")) return;
 
-    try {
-      await Promise.all(
-        selected.map((id) =>
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/products/${id}`, {
-            method: "DELETE",
-          }),
-        ),
-      );
+const handleBulkDelete = () => {
+  if (selected.length === 0) {
+    toast.error("No products selected");
+    return;
+  }
 
-      setSelected([]);
-      fetchProducts(currentPage);
-    } catch (error) {
-      console.error("Error deleting products:", error);
-      alert("Failed to delete products");
+  toast(
+    (t) => (
+      <div className="flex flex-col gap-2 text-center">
+        <p className="text-sm font-medium">
+          Delete {selected.length} selected product
+          {selected.length > 1 ? "s" : ""}?
+        </p>
+
+        <div className="flex justify-center gap-2 mt-2">
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              const loadingToast = toast.loading("Deleting products...");
+
+              try {
+                await Promise.all(
+                  selected.map((id) =>
+                    fetch(
+                      `${process.env.NEXT_PUBLIC_API_URL}/admin/products/${id}`,
+                      {
+                        method: "DELETE",
+                        headers: getAuthHeaders(),
+                      }
+                    )
+                  )
+                );
+
+                toast.dismiss(loadingToast);
+                toast.success("Products deleted successfully");
+                setSelected([]);
+                fetchProducts(currentPage);
+              } catch (error) {
+                toast.dismiss(loadingToast);
+                toast.error("Failed to delete products");
+                console.error("Error deleting products:", error);
+              }
+            }}
+            className="px-3 py-1 text-sm bg-red-600 text-white rounded"
+          >
+            Delete
+          </button>
+
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1 text-sm bg-gray-200 text-black rounded"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ),
+    {
+      duration: Infinity,
+      position: "top-center",
     }
-  };
+  );
+};
+
 
   const handleView = (slug) => {
     router.push(`/admin/product/${slug}`);
@@ -469,48 +592,50 @@ export default function ProductsPage() {
           </div>
           
           <div className="flex items-center gap-2">
-            <button
-              onClick={handlePrevious}
-              disabled={!pagination.hasPrevPage}
-              className={`px-3 py-1 rounded ${
-                pagination.hasPrevPage
-                  ? "text-gray-700 hover:bg-gray-100 cursor-pointer"
-                  : "text-gray-400 cursor-not-allowed"
-              }`}
-            >
-              Previous
-            </button>
+  <button
+    onClick={handlePrevious}
+    disabled={!pagination.hasPrevPage}
+    className={`px-3 py-1 rounded ${
+      pagination.hasPrevPage
+        ? "text-gray-700 hover:bg-gray-100 cursor-pointer"
+        : "text-gray-400 cursor-not-allowed"
+    }`}
+  >
+    Previous
+  </button>
 
-            {getPageNumbers().map((page, index) => (
-              page === '...' ? (
-                <span key={`ellipsis-${index}`} className="px-2">...</span>
-              ) : (
-                <button
-                  key={page}
-                  onClick={() => handlePageChange(page)}
-                  className={`px-3 py-1 rounded ${
-                    currentPage === page
-                      ? "bg-blue-600 text-white"
-                      : "text-gray-700 hover:bg-gray-100 cursor-pointer"
-                  }`}
-                >
-                  {page}
-                </button>
-              )
-            ))}
+  {getPageNumbers().map((page, index) => (
+    page === '...' ? (
+      <span key={`ellipsis-${index}`} className="px-2">...</span>
+    ) : (
+      <button
+        key={`page-${page}`} 
+        onClick={() => handlePageChange(page)}
+        className={`px-3 py-1 rounded ${
+          currentPage === page
+            ? "bg-blue-600 text-white"
+            : "text-gray-700 hover:bg-gray-100 cursor-pointer"
+        }`}
+      >
+        {page}
+      </button>
+    )
+  ))}
 
-            <button
-              onClick={handleNext}
-              disabled={!pagination.hasNextPage}
-              className={`px-3 py-1 rounded ${
-                pagination.hasNextPage
-                  ? "text-gray-700 hover:bg-gray-100 cursor-pointer"
-                  : "text-gray-400 cursor-not-allowed"
-              }`}
-            >
-              Next
-            </button>
-          </div>
+  <button
+    onClick={handleNext}
+    disabled={!pagination.hasNextPage}
+    className={`px-3 py-1 rounded ${
+      pagination.hasNextPage
+        ? "text-gray-700 hover:bg-gray-100 cursor-pointer"
+        : "text-gray-400 cursor-not-allowed"
+    }`}
+  >
+    Next
+  </button>
+</div>
+
+
         </div>
       </div>
     </div>

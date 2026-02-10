@@ -1,25 +1,46 @@
+/* eslint-disable */
 "use client";
 import { createContext, useContext, useState, useEffect } from "react";
+import useSWR from 'swr';
 import { useAuth } from "./AuthContext";
 import toast from "react-hot-toast";
 
 const ShopContext = createContext();
 
+const fetcher = (url, token) =>
+  fetch(url, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((res) => res.json());
+
 export function ShopProvider({ children }) {
   const { token, isAuthenticated } = useAuth();
-  const [cart, setCart] = useState({ items: [], totalAmount: 0, totalItems: 0 });
-  const [wishlist, setWishlist] = useState({ products: [] });
+  const [loading, setLoading] = useState(true);
 
-  // Fetch cart and wishlist when user logs in
+  const { data: cartData, mutate: mutateCart } = useSWR(
+    isAuthenticated() ? [`${process.env.NEXT_PUBLIC_API_URL}/cart`, token] : null,
+    ([url, token]) => fetcher(url, token),
+    { refreshInterval: 0 }
+  );
+
+  const { data: wishlistData, mutate: mutateWishlist } = useSWR(
+    isAuthenticated() ? [`${process.env.NEXT_PUBLIC_API_URL}/wishlist`, token] : null,
+    ([url, token]) => fetcher(url, token),
+    { refreshInterval: 0 }
+  );
+  
+  const cart = cartData?.cart || { items: [], totalAmount: 0, totalItems: 0 };
+  const wishlist = wishlistData?.wishlist || { products: [] };
+
   useEffect(() => {
     if (isAuthenticated()) {
-      fetchCart();
-      fetchWishlist();
+      setLoading(false);
     } else {
-      setCart({ items: [], totalAmount: 0, totalItems: 0 });
-      setWishlist({ products: [] });
+      setLoading(false);
     }
-  }, [token]);
+  }, [token, isAuthenticated]);
 
   const getAuthHeaders = () => {
     return {
@@ -28,67 +49,37 @@ export function ShopProvider({ children }) {
     };
   };
 
-  const fetchCart = async () => {
-    if (!isAuthenticated()) return;
+ const addToCart = async (productId, quantity = 1, skipToast = false) => {
+  if (!isAuthenticated()) {
+    toast.error("Please login to add items to cart");
+    return { success: false, message: "Please login first" };
+  }
 
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cart`, {
-        headers: getAuthHeaders(),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setCart(data.cart);
-      }
-    } catch (error) {
-      console.error("Error fetching cart:", error);
-    }
-  };
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cart/add`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ productId, quantity }),
+    });
 
-  const fetchWishlist = async () => {
-    if (!isAuthenticated()) return;
+    const data = await res.json();
 
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/wishlist`, {
-        headers: getAuthHeaders(),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setWishlist(data.wishlist);
-      }
-    } catch (error) {
-      console.error("Error fetching wishlist:", error);
-    }
-  };
-
-  const addToCart = async (productId, quantity = 1) => {
-    if (!isAuthenticated()) {
-      toast.error("Please login to add items to cart");
-      return { success: false, message: "Please login first" };
-    }
-
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cart/add`, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ productId, quantity }),
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        setCart(data.cart);
+    if (data.success) {
+      mutateCart();
+      if (!skipToast) {
         toast.success(data.message || "Added to cart!");
-        return { success: true, message: data.message };
-      } else {
-        toast.error(data.message || "Failed to add to cart");
-        return { success: false, message: data.message };
       }
-    } catch (error) {
-      console.error("Error adding to cart:", error);
-      toast.error("Failed to add to cart");
-      return { success: false, message: "Failed to add to cart" };
+      return { success: true, message: data.message };
+    } else {
+      toast.error(data.message || "Failed to add to cart");
+      return { success: false, message: data.message };
     }
-  };
+  } catch (error) {
+    console.error("Error adding to cart:", error);
+    toast.error("Failed to add to cart");
+    return { success: false, message: "Failed to add to cart" };
+  }
+};
 
   const updateCartQuantity = async (productId, quantity) => {
     if (!isAuthenticated()) return { success: false };
@@ -103,12 +94,15 @@ export function ShopProvider({ children }) {
       const data = await res.json();
 
       if (data.success) {
-        setCart(data.cart);
+        mutateCart();
+        toast.success("Cart updated successfully");
         return { success: true };
       }
+      toast.error(data.message || "Failed to update cart");
       return { success: false, message: data.message };
     } catch (error) {
       console.error("Error updating cart:", error);
+      toast.error("Failed to update cart");
       return { success: false, message: "Failed to update cart" };
     }
   };
@@ -128,13 +122,14 @@ export function ShopProvider({ children }) {
       const data = await res.json();
 
       if (data.success) {
-        setCart(data.cart);
+        mutateCart();
         toast.success("Item removed from cart");
         return { success: true };
       }
       return { success: false };
     } catch (error) {
       console.error("Error removing from cart:", error);
+      toast.error("Failed to remove from cart");
       return { success: false };
     }
   };
@@ -158,10 +153,8 @@ export function ShopProvider({ children }) {
       const data = await res.json();
 
       if (data.success) {
-        setWishlist(data.wishlist);
-        toast.success(
-          data.isWishlisted ? "Added to wishlist!" : "Removed from wishlist!"
-        );
+        mutateWishlist();
+        toast.success(data.isWishlisted ? "Added to wishlist!" : "Removed from wishlist!");
         return { success: true, isWishlisted: data.isWishlisted };
       }
       return { success: false };
@@ -173,6 +166,7 @@ export function ShopProvider({ children }) {
   };
 
   const isInWishlist = (productId) => {
+    if (!wishlist || !wishlist.products) return false;
     return wishlist.products.some((p) => p._id === productId);
   };
 
@@ -181,13 +175,12 @@ export function ShopProvider({ children }) {
       value={{
         cart,
         wishlist,
+        loading,
         addToCart,
         updateCartQuantity,
         removeFromCart,
         toggleWishlist,
         isInWishlist,
-        fetchCart,
-        fetchWishlist,
       }}
     >
       {children}

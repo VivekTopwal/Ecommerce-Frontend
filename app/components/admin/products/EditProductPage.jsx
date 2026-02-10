@@ -1,93 +1,94 @@
 "use client";
 
-import React, { useState, useEffect, useRef} from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { X, CloudUpload, DollarSign, ChevronDown } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
+import { useAuth } from "@/app/context/AuthContext";
+import toast from "react-hot-toast";
 
 const EditProductPage = () => {
   const router = useRouter();
   const params = useParams();
   const slug = params.slug;
+  const { token } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [mainImage, setMainImage] = useState(null);
   const [existingMainImage, setExistingMainImage] = useState("");
-//   const [featureImages, setFeatureImages] = useState([]);
+
   const [category, setCategory] = useState("");
   const [productPrice, setProductPrice] = useState("");
   const [salePrice, setSalePrice] = useState("");
   const [quantity, setQuantity] = useState("");
   const [productId, setProductId] = useState("");
 
-const hasFetched = useRef(false);
+  const hasFetched = useRef(false);
 
-useEffect(() => {
-  const fetchProduct = async () => {
-    
-    if (hasFetched.current) return;
-    hasFetched.current = true;
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (hasFetched.current) return;
+      hasFetched.current = true;
 
-    try {
-      console.log("Fetching product with slug:", slug);
-      
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/products/${slug}`;
-      const res = await fetch(url);
-      
-      const contentType = res.headers.get("content-type");
-      
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await res.text();
-        throw new Error("Server returned HTML instead of JSON. Check if the API endpoint exists.");
+      try {     
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/products/${slug}`;
+        const res = await fetch(url);
+
+        const contentType = res.headers.get("content-type");
+
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await res.text();
+          throw new Error(
+            "Server returned HTML instead of JSON. Check if the API endpoint exists.",
+          );
+        }
+
+        const data = await res.json();
+       
+        if (!res.ok) throw new Error(data.message || "Failed to fetch product");
+
+        const product = data.product;
+
+        if (!product) {
+          throw new Error("Product data not found in response");
+        }
+
+        setProductId(product._id);
+        setName(product.name || "");
+        setDescription(product.description || "");
+
+        const imageUrl = product.mainImage
+          ? product.mainImage.startsWith("http")
+            ? product.mainImage
+            : `${process.env.NEXT_PUBLIC_API_URL}/uploads/${product.mainImage}`
+          : "";
+
+        setExistingMainImage(imageUrl);
+
+        setCategory(product.category || "");
+        setProductPrice(product.productPrice || "");
+        setSalePrice(product.salePrice || "");
+        setQuantity(product.quantity || "");
+
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching product:", error);
+        toast.error("Failed to load product: " + error.message);
+        setLoading(false);
+        router.push("/admin/products");
       }
-      
-      const data = await res.json();
-      console.log("Data received:", data);
+    };
 
-      if (!res.ok) throw new Error(data.message || "Failed to fetch product");
-
-      const product = data.product;
-
-      if (!product) {
-        throw new Error("Product data not found in response");
-      }
-
-      setProductId(product._id);
-      setName(product.name || "");
-      setDescription(product.description || "");
-      
-      const imageUrl = product.mainImage 
-        ? product.mainImage.startsWith('http') 
-          ? product.mainImage 
-          : `${process.env.NEXT_PUBLIC_API_URL}/uploads/${product.mainImage}` 
-        : "";
-      
-      setExistingMainImage(imageUrl);
-      
-      setCategory(product.category || "");
-      setProductPrice(product.productPrice || "");
-      setSalePrice(product.salePrice || "");
-      setQuantity(product.quantity || "");
-
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching product:", error);
-      alert("Failed to load product: " + error.message);
+    if (slug) {
+      fetchProduct();
+    } else {
+      console.error("No slug found in URL params");
       setLoading(false);
       router.push("/admin/products");
     }
-  };
-
-  if (slug) {
-    fetchProduct();
-  } else {
-    console.error("No slug found in URL params");
-    setLoading(false);
-    router.push("/admin/products");
-  }
-}, [slug, router]);
+  }, [slug, router]);
 
   const handleCancel = () => {
     router.push("/admin/products");
@@ -108,30 +109,24 @@ useEffect(() => {
         formData.append("mainImage", mainImage);
       }
 
-    //   featureImages.forEach((img) => {
-    //     formData.append("featureImages", img);
-    //   });
-
       const url = `${process.env.NEXT_PUBLIC_API_URL}/admin/products/${productId}`;
-      console.log("Updating product at:", url);
-
-      const response = await fetch(url, {
+        const response = await fetch(url, {
         method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: formData,
       });
 
-      console.log("Update response status:", response.status);
-
       const data = await response.json();
-      console.log("Update response data:", data);
+      if (!response.ok)
+        throw new Error(data.message || "Failed to update product");
 
-      if (!response.ok) throw new Error(data.message || "Failed to update product");
-
-      alert("Product updated successfully!");
+      toast.success("Products updated successfully");
       router.push("/admin/products");
     } catch (error) {
       console.error("Error updating product:", error);
-      alert(error.message || "Failed to update product");
+      toast.error("Failed to update products");
     }
   };
 
@@ -241,8 +236,8 @@ useEffect(() => {
                     {mainImage
                       ? mainImage.name
                       : existingMainImage
-                      ? "Click to upload new main image"
-                      : "Click to upload main image"}
+                        ? "Click to upload new main image"
+                        : "Click to upload main image"}
                   </p>
                   <p className="text-xs mt-1 text-gray-500">
                     (JPEG, PNG, WEBP)
@@ -268,7 +263,7 @@ useEffect(() => {
                         type="button"
                         onClick={() => {
                           const confirmed = window.confirm(
-                            "Are you sure you want to remove the new image?"
+                            "Are you sure you want to remove the new image?",
                           );
                           if (confirmed) setMainImage(null);
                         }}

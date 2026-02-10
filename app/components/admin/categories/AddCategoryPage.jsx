@@ -1,11 +1,14 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/AuthContext";
+import toast from "react-hot-toast";
 import Image from "next/image";
 import { CloudUpload, X } from "lucide-react";
 
 export default function AddCategoryPage() {
   const router = useRouter();
+   const { token } = useAuth();
   const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -39,19 +42,22 @@ export default function AddCategoryPage() {
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/add-category`, {
         method: 'POST',
+         headers: {
+         Authorization: `Bearer ${token}`,
+    },
         body: data,
       });
 
       if (res.ok) {
-        alert('Category created successfully!');
+        toast.success('Category created successfully!');
         router.push('/admin/categories');
       } else {
         const error = await res.json();
-        alert(error.message || 'Failed to create category');
+        toast.error(error.message || 'Failed to create category');
       }
     } catch (error) {
       console.error('Error creating category:', error);
-      alert('Failed to create category');
+      toast.error('Failed to create category');
     } finally {
       setLoading(false);
     }

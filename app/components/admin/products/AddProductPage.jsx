@@ -4,10 +4,12 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { X, CloudUpload, DollarSign, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/AuthContext";
+import toast from "react-hot-toast";
 
 const AddProductPage = () => {
   const router = useRouter();
-
+  const { token } = useAuth();
   const handleCancel = () => {
     router.push("/admin/products");
   };
@@ -20,12 +22,31 @@ const AddProductPage = () => {
   const [productPrice, setproductPrice] = useState("");
   const [salePrice, setsalePrice] = useState("");
   const [quantity, setQuantity] = useState("");
-  // const [productSlug, setproductSlug] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const clearForm = () => {
+    setName("");
+    setDescription("");
+    setMainImage(null);
+    setFeatureImages([]);
+    setCategory("");
+    setproductPrice("");
+    setsalePrice("");
+    setQuantity("");
+  };
 
   const addProduct = async () => {
+    if (!name || !description || !category || !salePrice || !quantity || !mainImage) {
+      toast.error("Please fill in all required fields!");
+      return;
+    }
+
+    setIsSubmitting(true);
+    const loadingToast = toast.loading("Adding product..."); 
+
     try {
       const formData = new FormData();
-
+      
       formData.append("name", name);
       formData.append("description", description);
       formData.append("category", category);
@@ -42,18 +63,33 @@ const AddProductPage = () => {
         `${process.env.NEXT_PUBLIC_API_URL}/admin/add-product`,
         {
           method: "POST",
+         headers: {
+         Authorization: `Bearer ${token}`,
+    },
           body: formData,
-        },
+        }
       );
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
+       toast.dismiss(loadingToast);
+    
+      if (!response.ok) {
+        toast.error(data.message || "Failed to add product");
+        throw new Error(data.message);
+      }
 
-      alert("Product added successfully!");
+      toast.success("Product added successfully! 🎉");
+      clearForm();
+
+    setTimeout(() => router.push("/admin/products"), 1500);
+
     } catch (error) {
-      alert(error.message);
-    }
+      toast.dismiss(loadingToast);
+      toast.error(error.message || "Something went wrong!");
+    }finally {
+      setIsSubmitting(false);
   };
+}
 
   return (
     <div className="min-h-screen bg-white p-6">
@@ -152,21 +188,50 @@ const AddProductPage = () => {
                         className="w-full h-full object-cover"
                       />
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const confirmed = window.confirm(
-                            "Are you sure you want to remove the main image?",
-                          );
-                          if (confirmed) setMainImage(null);
-                        }}
-                        className="absolute top-2 right-2 bg-black/70 text-white p-1.5 rounded-full
-                   opacity-0 group-hover:opacity-100 transition
-                   hover:bg-red-600 hover:cursor-pointer"
-                        aria-label="Remove main image"
-                      >
-                        <X size={16} />
-                      </button>
+                   <button
+  type="button"
+  onClick={() => {
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-2">
+          <p className="text-sm">
+            Are you sure you want to remove the main image?
+          </p>
+
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setMainImage(null);
+                toast.dismiss(t.id);
+                toast.success("Main image removed");
+              }}
+              className="px-3 py-1 text-sm bg-red-600 text-white rounded"
+            >
+              Remove
+            </button>
+
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-3 py-1 text-sm bg-gray-200 text-black rounded"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        duration: Infinity,
+      }
+    );
+  }}
+  className="absolute top-2 right-2 bg-black/70 text-white p-1.5 rounded-full
+  opacity-0 group-hover:opacity-100 transition
+  hover:bg-red-600 hover:cursor-pointer"
+  aria-label="Remove main image"
+>
+  <X size={16} />
+</button>
+                      
                     </div>
                   </div>
                 )}
@@ -191,7 +256,8 @@ const AddProductPage = () => {
 
                     setFeatureImages((prev) => {
                       if (prev.length >= 5) {
-                        alert("You can upload a maximum of 5 feature images.");
+
+                        toast.error("You can upload a maximum of 5 feature images.");
                         return prev;
                       }
                       return [...prev, file];
@@ -241,20 +307,53 @@ const AddProductPage = () => {
                             className="w-full h-full object-cover"
                           />
 
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setFeatureImages((prev) =>
-                                prev.filter((_, i) => i !== index),
-                              )
-                            }
-                            className="absolute top-2 right-2 bg-black/70 text-white p-1.5 rounded-full
-                       opacity-0 group-hover:opacity-100 transition
-                       hover:bg-red-600 hover:cursor-pointer"
-                            aria-label="Remove feature image"
-                          >
-                            <X size={16} />
-                          </button>
+                       <button
+  type="button"
+  onClick={() => {
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-2">
+          <p className="text-sm">
+            Are you sure you want to remove this feature image?
+          </p>
+
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setFeatureImages((prev) =>
+                  prev.filter((_, i) => i !== index)
+                );
+                toast.dismiss(t.id);
+                toast.success("Feature image removed");
+              }}
+              className="px-3 py-1 text-sm bg-red-600 text-white rounded"
+            >
+              Remove
+            </button>
+
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-3 py-1 text-sm bg-gray-200 text-black rounded"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        duration: Infinity,
+      }
+    );
+  }}
+  className="absolute top-2 right-2 bg-black/70 text-white p-1.5 rounded-full
+  opacity-0 group-hover:opacity-100 transition
+  hover:bg-red-600 hover:cursor-pointer"
+  aria-label="Remove feature image"
+>
+  <X size={16} />
+</button>
+
+
                         </div>
                       ))}
                     </div>
@@ -342,6 +441,7 @@ const AddProductPage = () => {
         <div className="flex justify-between items-center p-6 border-t border-gray-200 bg-gray-50 rounded-b-lg">
           <button
             onClick={handleCancel}
+            disabled={isSubmitting}
             className="px-6 py-2 rounded-md border bg-white hover:bg-gray-100 w-[49%] cursor-pointer"
           >
             Cancel
@@ -349,9 +449,10 @@ const AddProductPage = () => {
 
           <button
             onClick={addProduct}
+             disabled={isSubmitting}
             className="px-8 py-2 rounded-md bg-green-500 text-white hover:bg-green-600 w-[49%] cursor-pointer"
           >
-            Add Product
+            {isSubmitting ? "Adding..." : "Add Product"}
           </button>
         </div>
       </div>

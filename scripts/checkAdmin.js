@@ -30,7 +30,7 @@ async function checkAdmin() {
     console.log("Password (hashed):", admin.password);
     console.log("Password starts with $2:", admin.password.startsWith("$2"));
 
-    // Test password
+
     const testPassword = "admin123";
     const isValid = await bcrypt.compare(testPassword, admin.password);
     

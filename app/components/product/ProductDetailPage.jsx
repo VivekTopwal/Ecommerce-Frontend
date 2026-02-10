@@ -20,8 +20,8 @@ export default function ProductDetail() {
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [addingToCart, setAddingToCart] = useState(false); // Separate state for Add to Cart
-  const [buyingNow, setBuyingNow] = useState(false); // Separate state for Buy Now
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [buyingNow, setBuyingNow] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(null);
   const [images, setImages] = useState([]);
@@ -80,24 +80,40 @@ export default function ProductDetail() {
   const handleAddToCart = async () => {
     setAddingToCart(true);
     const result = await addToCart(product._id, quantity);
-    
-    if (result.success) {
-      // Optional: Reset quantity after adding
-      // setQuantity(1);
-    }
     setAddingToCart(false);
   };
 
   const handleBuyNow = async () => {
     setBuyingNow(true);
-    const result = await addToCart(product._id, quantity);
     
-    if (result.success) {
-      router.push("/checkout");
-    } else {
-      alert(result.message || "Failed to proceed");
+    try {
+      // Store the buy now item in session storage
+      const buyNowItem = {
+        product: {
+          _id: product._id,
+          name: product.name,
+          slug: product.slug,
+          mainImage: product.mainImage,
+          category: product.category,
+          salePrice: product.salePrice,
+          productPrice: product.productPrice,
+          quantity: product.quantity,
+        },
+        quantity: quantity,
+        salePrice: product.salePrice,
+        productPrice: product.productPrice,
+      };
+
+      sessionStorage.setItem("buyNowItem", JSON.stringify(buyNowItem));
+      
+      // Redirect to checkout with buy now flag
+      router.push("/checkout?buyNow=true");
+    } catch (error) {
+      console.error("Buy now error:", error);
+      toast.error("Failed to proceed to checkout");
+    } finally {
+      setBuyingNow(false);
     }
-    setBuyingNow(false);
   };
 
   const handleToggleWishlist = async () => {
@@ -123,7 +139,7 @@ export default function ProductDetail() {
             Product Not Found
           </h1>
           <p className="text-gray-600 text-base">
-            Sorry, the product you're looking for is unavailable or may have
+            Sorry, the product you&apos;re looking for is unavailable or may have
             been removed.
           </p>
         </div>

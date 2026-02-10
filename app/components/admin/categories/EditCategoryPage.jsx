@@ -3,10 +3,13 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import { CloudUpload, X, Loader2 } from "lucide-react";
+import { useAuth } from "@/app/context/AuthContext";
+import toast from "react-hot-toast";
 
 export default function EditCategoryPage() {
   const router = useRouter();
   const { id } = useParams();
+   const { token } = useAuth();
   
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -113,6 +116,9 @@ const removeNewImage = () => {
         `${process.env.NEXT_PUBLIC_API_URL}/admin/categories/${id}`,
         {
           method: 'PUT',
+          headers: {
+          Authorization: `Bearer ${token}`,
+        },
           body: data,
         }
       );

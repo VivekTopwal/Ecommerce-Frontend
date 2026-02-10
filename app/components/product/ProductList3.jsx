@@ -46,7 +46,7 @@ const ProductGrid = () => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (addingToCart || buyingNow) return; // Prevent multiple clicks
+    if (addingToCart || buyingNow) return; 
     
     setAddingToCart(productId);
     
@@ -54,8 +54,7 @@ const ProductGrid = () => {
       const result = await addToCart(productId, 1);
       
       if (result.success) {
-        // Toast notification is already shown in ShopContext
-        // alert(result.message || "Added to cart!");
+     
       } else {
         alert(result.message || "Failed to add to cart");
       }
@@ -71,12 +70,12 @@ const ProductGrid = () => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (addingToCart || buyingNow) return; // Prevent multiple clicks
+    if (addingToCart || buyingNow) return;
     
     setBuyingNow(productId);
     
     try {
-      // Add to cart silently (no toast notification)
+
       const result = await addToCart(productId, 1, true);
       
       if (result.success) {

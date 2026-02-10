@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useShop } from "@/app/context/ShopContext";
-import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/AuthContext";
+import { useRouter, useSearchParams  } from "next/navigation";
 import Image from "next/image";
 import { CreditCard, Truck, MapPin, ShoppingBag } from "lucide-react";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
@@ -9,8 +10,15 @@ import ProtectedRoute from "@/app/components/ProtectedRoute";
 export default function CheckoutPage() {
     const router = useRouter();
     const { cart } = useShop();
+     const { token } = useAuth();
     const [loading, setLoading] = useState(false);
     const [sessionId, setSessionId] = useState("");
+
+  const searchParams = useSearchParams();
+  const [isBuyNow, setIsBuyNow] = useState(false);
+  const [buyNowItem, setBuyNowItem] = useState(null);
+
+
 
     const [formData, setFormData] = useState({
 
@@ -18,17 +26,12 @@ export default function CheckoutPage() {
         lastName: "",
         email: "",
         phone: "",
-
         address: "",
         city: "",
         state: "",
         zipCode: "",
         country: "USA",
-
-
         paymentMethod: "card",
-
-
         sameAsShipping: true,
         orderNotes: "",
     });
@@ -45,10 +48,33 @@ export default function CheckoutPage() {
         const id = localStorage.getItem("sessionId");
         setSessionId(id);
 
-        if (!cart || cart.items.length === 0) {
-            router.push("/cart");
-        }
-    }, [cart, router]);
+    const buyNowParam = searchParams.get("buyNow");
+    
+    if (buyNowParam === "true") {
+      setIsBuyNow(true);
+      const storedItem = sessionStorage.getItem("buyNowItem");
+      
+      if (storedItem) {
+        setBuyNowItem(JSON.parse(storedItem));
+      } else {
+        router.push("/cart");
+      }
+    } else {
+      if (!cart || cart.items.length === 0) {
+        router.push("/cart");
+      }
+    }
+  }, [cart, router, searchParams]);
+
+ const checkoutItems = isBuyNow && buyNowItem ? [buyNowItem] : cart?.items || [];
+
+  const calculateSubtotal = () => {
+    if (isBuyNow && buyNowItem) {
+      return buyNowItem.salePrice * buyNowItem.quantity;
+    }
+    return cart?.totalAmount || 0;
+  };
+
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -75,22 +101,24 @@ export default function CheckoutPage() {
     };
 
     const calculateTotal = () => {
-        return Number((cart.totalAmount + calculateShipping() + calculateTax()).toFixed(2));
-    };
+    return Number((calculateSubtotal() + calculateShipping() + calculateTax()).toFixed(2));
+  };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
 
         try {
-            const orderData = {
-                sessionId,
-                customerInfo: {
-                    firstName: formData.firstName,
-                    lastName: formData.lastName,
-                    email: formData.email,
-                    phone: formData.phone,
-                },
+           const orderData = {
+        sessionId,
+        items: isBuyNow ? [buyNowItem] : undefined,
+        isBuyNow: isBuyNow,
+        customerInfo: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+        },
                 shippingAddress: {
                     address: formData.address,
                     city: formData.city,
@@ -108,30 +136,34 @@ export default function CheckoutPage() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`,
                 },
                 body: JSON.stringify(orderData),
             });
 
             const data = await res.json();
-
-            if (data.success) {
-                localStorage.setItem("lastOrderNumber", data.order.orderNumber);
-                router.push(`/order-confirmation/${data.order.orderNumber}`);
-            } else {
-                alert(data.message || "Failed to place order");
-            }
-        } catch (error) {
-            console.error("Error placing order:", error);
-            alert("Failed to place order. Please try again.");
-        } finally {
-            setLoading(false);
+  if (data.success) {
+      
+        if (isBuyNow) {
+          sessionStorage.removeItem("buyNowItem");
         }
-    };
-
-    if (!cart || cart.items.length === 0) {
-        return null;
+        
+        localStorage.setItem("lastOrderNumber", data.order.orderNumber);
+        router.push(`/order-confirmation/${data.order.orderNumber}`);
+      } else {
+        alert(data.message || "Failed to place order");
+      }
+    } catch (error) {
+      console.error("Error placing order:", error);
+      alert("Failed to place order. Please try again.");
+    } finally {
+      setLoading(false);
     }
+  };
 
+  if (checkoutItems.length === 0) {
+    return null;
+  }
     return (
          <ProtectedRoute>
         <div className="min-h-screen bg-gray-50 py-8 px-4">

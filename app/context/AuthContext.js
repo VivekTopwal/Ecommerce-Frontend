@@ -13,7 +13,6 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(null);
 
   useEffect(() => {
-    // Check if user is logged in
     const storedToken = Cookies.get("token");
     const storedUser = localStorage.getItem("user");
 
@@ -37,9 +36,8 @@ export function AuthProvider({ children }) {
       const data = await res.json();
 
       if (data.success) {
-        // Store token in cookie with proper settings
         Cookies.set("token", data.token, { 
-          expires: 7, // 7 days
+          expires: 7, 
           path: '/',
           sameSite: 'lax'
         });

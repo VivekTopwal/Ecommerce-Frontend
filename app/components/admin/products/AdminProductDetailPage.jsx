@@ -3,20 +3,34 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/AuthContext";
 
 export default function ProductDetail() {
   const router = useRouter();
-  const { slug } = useParams();
+  const { token, isAuthenticated, isAdmin } = useAuth();
+  const getAuthHeaders = () => {
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  };
 
+  const { slug } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/admin/products/${slug}`
+          `${process.env.NEXT_PUBLIC_API_URL}/admin/products/${slug}`,
+             {
+          method: "GET",
+          headers: getAuthHeaders(),
+        }
         );
+
         const data = await res.json();
 
         if (data.success && data.product) {
@@ -30,7 +44,7 @@ export default function ProductDetail() {
     };
 
     if (slug) fetchProduct();
-  }, [slug]);
+  }, [slug, token, isAuthenticated, isAdmin]);
 
   const handleEdit = () => {
     router.push(`/admin/edit-product/${slug}`);

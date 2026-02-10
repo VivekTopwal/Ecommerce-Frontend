@@ -20,9 +20,8 @@ async function createAdmin() {
     await mongoose.connect(process.env.MONGODB_URI);
 
     const adminEmail = "admin@store.com";
-    const adminPassword = "admin123"; // Change this!
+    const adminPassword = "admin123"; 
 
-    // Check if admin exists
     const existingAdmin = await User.findOne({ email: adminEmail });
 
     if (existingAdmin) {
@@ -30,11 +29,9 @@ async function createAdmin() {
       process.exit(0);
     }
 
-    // Hash password
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(adminPassword, salt);
-
-    // Create admin
     const admin = await User.create({
       firstName: "Admin",
       lastName: "User",

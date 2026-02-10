@@ -3,9 +3,18 @@ import { Plus, Trash2, SquarePen, Eye, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import Image from "next/image";
+import { useAuth } from "@/app/context/AuthContext";
+import toast from "react-hot-toast";
 
 export default function AdminCategoryPage() {
   const router = useRouter();
+   const { token, isAuthenticated, isAdmin } = useAuth();
+    const getAuthHeaders = () => {
+      return {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+    };
 
   const [categories, setCategories] = useState([]);
   const [search, setSearch] = useState("");
@@ -27,6 +36,7 @@ export default function AdminCategoryPage() {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/admin/categories?page=${page}&limit=${limit}`,
         {
+          headers: getAuthHeaders(),
           cache: "no-store",
         }
       );
