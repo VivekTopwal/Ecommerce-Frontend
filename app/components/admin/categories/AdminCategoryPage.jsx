@@ -51,7 +51,7 @@ export default function AdminCategoryPage() {
       console.error(err);
       setCategories([]);
     }
-  }, [limit]);
+  }, [limit, token, isAuthenticated, isAdmin]);
 
   useEffect(() => {
     fetchCategories(1);
@@ -62,21 +62,36 @@ export default function AdminCategoryPage() {
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/admin/categories/${id}/publish`,
-        { method: "PATCH" }
+        { method: "PATCH",
+          headers: {
+          Authorization: `Bearer ${token}`,
+        },
+         }
+        
       );
 
-      if (res.ok) {
-        setCategories(prev => prev.map(c => 
+
+if(!res.ok) {
+  throw new Error("Failed to update publish status");
+}
+
+const data = await res.json();
+
+ setCategories(prev => prev.map(c => 
           c._id === id ? { ...c, isPublished: !c.isPublished } : c
-        ));
-      } else {
-        alert("Failed to update publish status");
-      }
-    } catch (error) {
+        )
+      );
+  toast.success(
+      data.isPublished ? "Category published" : "Category unpublished"
+    );
+
+     } catch (error) {
       console.error("Error toggling publish status:", error);
-      alert("Failed to update publish status");
+      toast.error("Failed to update publish status");
     }
   };
+
+   
 
   const filtered = useMemo(() => {
     let temp = [...categories];
@@ -108,41 +123,126 @@ export default function AdminCategoryPage() {
     }
   };
 
-  const deleteCategory = async (id) => {
-    if (!confirm("Delete this category?")) return;
+ const deleteCategory = (id) => {
+  toast(
+    (t) => (
+      <div className="flex flex-col gap-2 text-center">
+        <p className="text-sm font-medium">
+          Are you sure you want to delete this category?
+        </p>
 
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/categories/${id}`, {
-        method: "DELETE",
-      });
+        <div className="flex justify-center gap-2 mt-2">
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              const loadingToast = toast.loading("Deleting category...");
 
-      fetchCategories(currentPage);
-    } catch (error) {
-      console.error("Error deleting category:", error);
-      alert("Failed to delete category");
+              try {
+                const res = await fetch(
+                  `${process.env.NEXT_PUBLIC_API_URL}/admin/categories/${id}`,
+                  {
+                    method: "DELETE",
+                    headers: getAuthHeaders(),
+                  }
+                );
+
+                if (!res.ok) {
+                  throw new Error("Failed to delete category");
+                }
+
+                toast.dismiss(loadingToast);
+                toast.success("Category deleted successfully");
+                fetchCategories(currentPage);
+              } catch (error) {
+                toast.dismiss(loadingToast);
+                toast.error("Failed to delete category");
+                console.error("Error deleting category:", error);
+              }
+            }}
+            className="px-3 py-1 text-sm bg-red-600 text-white rounded"
+          >
+            Delete
+          </button>
+
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1 text-sm bg-gray-200 text-black rounded"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ),
+    {
+      duration: Infinity,
+      position: "top-center",
     }
-  };
+  );
+};
 
-  const handleBulkDelete = async () => {
-    if (selected.length === 0) return;
-    if (!confirm("Delete selected categories?")) return;
+ const handleBulkDelete = () => {
+  if (selected.length === 0) {
+    toast.error("No categories selected");
+    return;
+  }
 
-    try {
-      await Promise.all(
-        selected.map((id) =>
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/categories/${id}`, {
-            method: "DELETE",
-          }),
-        ),
-      );
+  toast(
+    (t) => (
+      <div className="flex flex-col gap-2 text-center">
+        <p className="text-sm font-medium">
+          Delete {selected.length} selected categor
+          {selected.length > 1 ? "ies" : "y"}?
+        </p>
 
-      setSelected([]);
-      fetchCategories(currentPage);
-    } catch (error) {
-      console.error("Error deleting categories:", error);
-      alert("Failed to delete categories");
+        <div className="flex justify-center gap-2 mt-2">
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              const loadingToast = toast.loading("Deleting categories...");
+
+              try {
+                await Promise.all(
+                  selected.map((id) =>
+                    fetch(
+                      `${process.env.NEXT_PUBLIC_API_URL}/admin/categories/${id}`,
+                      {
+                        method: "DELETE",
+                        headers: getAuthHeaders(),
+                      }
+                    )
+                  )
+                );
+
+                toast.dismiss(loadingToast);
+                toast.success("Categories deleted successfully");
+                setSelected([]);
+                fetchCategories(currentPage);
+              } catch (error) {
+                toast.dismiss(loadingToast);
+                toast.error("Failed to delete categories");
+                console.error("Error deleting categories:", error);
+              }
+            }}
+            className="px-3 py-1 text-sm bg-red-600 text-white rounded"
+          >
+            Delete
+          </button>
+
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1 text-sm bg-gray-200 text-black rounded"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ),
+    {
+      duration: Infinity,
+      position: "top-center",
     }
-  };
+  );
+};
 
   const handleView = (id) => {
     router.push(`/admin/category/${id}`);

@@ -3,11 +3,21 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import { Loader2, ArrowLeft } from "lucide-react";
+import { useAuth } from "@/app/context/AuthContext";
 
 export default function ViewCategoryPage() {
   const router = useRouter();
   const { id } = useParams();
   
+  const { token, isAuthenticated, isAdmin } = useAuth();
+  const getAuthHeaders = () => {
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  };
+
+
   const [category, setCategory] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -15,19 +25,23 @@ export default function ViewCategoryPage() {
     const fetchCategory = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/admin/categories/${id}`
+          `${process.env.NEXT_PUBLIC_API_URL}/admin/categories/${id}`,
+            {
+          method: "GET",
+          headers: getAuthHeaders(),
+        }
         );
         const data = await res.json();
 
         if (data.success && data.category) {
           setCategory(data.category);
         } else {
-          alert('Category not found');
+          toast.error('Category not found');
           router.push('/admin/categories');
         }
       } catch (error) {
         console.error("Failed to fetch category", error);
-        alert('Failed to load category');
+        toast.error('Failed to load category');
         router.push('/admin/categories');
       } finally {
         setLoading(false);
@@ -37,7 +51,7 @@ export default function ViewCategoryPage() {
     if (id) {
       fetchCategory();
     }
-  }, [id, router]);
+  }, [id, router, token, isAuthenticated, isAdmin]);
 
   const handleEdit = () => {
     router.push(`/admin/edit-category/${id}`);
@@ -60,7 +74,6 @@ export default function ViewCategoryPage() {
 
   return (
     <div className="min-h-screen bg-[#f7f7f5] px-10 py-8">
-      {/* Back Button */}
       <button
         onClick={() => router.push('/admin/categories')}
         className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
@@ -68,14 +81,12 @@ export default function ViewCategoryPage() {
         <ArrowLeft size={20} />
         Back to Categories
       </button>
-
-      {/* Page Title */}
       <h1 className="text-2xl font-semibold text-gray-900 mb-10">
         Category Details
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl">
-        {/* Left: Category Icon */}
+
         <div className="flex items-center justify-center bg-white rounded-lg p-8">
           {category.icon ? (
             <Image
@@ -93,7 +104,6 @@ export default function ViewCategoryPage() {
           )}
         </div>
 
-        {/* Right: Category Info */}
         <div className="space-y-6">
           <p className="text-sm text-gray-600">
             Status:{" "}

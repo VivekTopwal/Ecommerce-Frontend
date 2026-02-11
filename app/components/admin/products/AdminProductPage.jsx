@@ -91,14 +91,12 @@ const togglePublish = async (id) => {
 
     const data = await res.json();
 
-    // Update the product in state immediately
     setProducts((prev) =>
       prev.map((p) =>
         p._id === id ? { ...p, isPublished: data.isPublished } : p
       )
     );
     
-    // Show frontend toast
     toast.success(
       data.isPublished ? "Product published" : "Product unpublished"
     );

@@ -29,13 +29,19 @@ useEffect(() => {
   const fetchCategory = async () => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/categories/${id}`
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/categories/${id}`,
+          {
+          method: 'GET',
+          headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        }
       );
 
       const data = await res.json();
 
       if (!data.success || !data.category) {
-        alert("Category not found");
+        toast.error("Category not found");
         router.push("/admin/categories");
         return;
       }
@@ -60,7 +66,7 @@ useEffect(() => {
       }
     } catch (error) {
       console.error("Failed to fetch category", error);
-      alert("Failed to load category");
+      toast.error("Failed to load category");
       router.push("/admin/categories");
     } finally {
       setLoading(false);
@@ -70,7 +76,7 @@ useEffect(() => {
   if (id) {
     fetchCategory();
   }
-}, [id, router]);
+}, [id, router, token]);
 
 
   const handleChange = (e) => {
@@ -90,12 +96,39 @@ const handleImageChange = (e) => {
 };
 
 const removeNewImage = () => {
-  const confirmed = window.confirm(
-    "Are you sure you want to remove the new image?"
+  toast(
+    (t) => (
+      <div className="flex flex-col gap-2 text-center">
+        <p className="text-sm font-medium">
+          Are you sure you want to remove this image?
+        </p>
+
+        <div className="flex justify-center gap-2 mt-2">
+          <button
+            onClick={() => {
+              setIcon(null);
+              toast.dismiss(t.id);
+              toast.success("Image removed");
+            }}
+            className="px-3 py-1 text-sm bg-red-600 text-white rounded"
+          >
+            Remove
+          </button>
+
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1 text-sm bg-gray-200 text-black rounded"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ),
+    {
+      duration: Infinity,
+      position: "top-center",
+    }
   );
-  if (confirmed) {
-    setIcon(null);
-  }
 };
 
   const handleSubmit = async (e) => {
@@ -124,25 +157,57 @@ const removeNewImage = () => {
       );
 
       if (res.ok) {
-        alert('Category updated successfully!');
+        toast.success('Category updated successfully!');
         router.push('/admin/categories');
       } else {
         const error = await res.json();
-        alert(error.message || 'Failed to update category');
+        toast.error(error.message || 'Failed to update category');
       }
     } catch (error) {
       console.error('Error updating category:', error);
-      alert('Failed to update category');
+      toast.error('Failed to update category');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleCancel = () => {
-    if (confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
-      router.push('/admin/categories');
+const handleCancel = () => {
+  toast(
+    (t) => (
+      <div className="flex flex-col gap-2 text-center">
+        <p className="text-sm font-medium">
+          Are you sure you want to cancel?
+        </p>
+        <p className="text-xs text-gray-400">
+          Any unsaved changes will be lost.
+        </p>
+
+        <div className="flex justify-center gap-2 mt-2">
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              router.push("/admin/categories");
+            }}
+            className="px-3 py-1 text-sm bg-red-600 text-white rounded"
+          >
+            Yes, Cancel
+          </button>
+
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1 text-sm bg-gray-200 text-black rounded"
+          >
+            Continue Editing
+          </button>
+        </div>
+      </div>
+    ),
+    {
+      duration: Infinity,
+      position: "top-center",
     }
-  };
+  );
+};
 
   if (loading) {
     return (
@@ -177,11 +242,10 @@ return (
         </button>
       </div>
 
-      {/* Form */}
+   
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
         
-        {/* Name */}
-        <div className="grid grid-cols-12 gap-6 items-center">
+            <div className="grid grid-cols-12 gap-6 items-center">
           <label className="col-span-3 text-[16px] font-semibold text-gray-800">
             Name
           </label>
@@ -196,7 +260,6 @@ return (
           />
         </div>
 
-        {/* Description */}
         <div className="grid grid-cols-12 gap-6 items-start">
           <label className="col-span-3 text-[16px] font-semibold text-gray-800">
             Description
@@ -218,7 +281,6 @@ return (
 
   <div className="col-span-12 md:col-span-9">
     
-    {/* Existing Image */}
     {existingIcon && !icon && (
       <div className="mb-4">
         <p className="text-sm font-medium text-gray-700 mb-2">
@@ -263,7 +325,6 @@ return (
       </p>
     </label>
 
-    {/* New Image Preview */}
     {icon && (
       <div className="mt-4">
         <p className="text-sm font-medium text-gray-700 mb-2">
@@ -294,8 +355,6 @@ return (
   </div>
 </div>
 
-
-        {/* Published */}
         <div className="flex items-center gap-3">
           <label className="text-[17px] font-medium text-gray-800">
             Published

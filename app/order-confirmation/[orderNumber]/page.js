@@ -3,30 +3,44 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { CheckCircle, Package, Truck, MapPin, CreditCard } from "lucide-react";
+import { useAuth } from "@/app/context/AuthContext";
+import toast from "react-hot-toast";
+
 
 export default function OrderConfirmationPage() {
   const router = useRouter();
   const { orderNumber } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { token, isAuthenticated } = useAuth();
+  const getAuthHeaders = () => {
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  };
+
 
   useEffect(() => {
     const fetchOrder = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/orders/number/${orderNumber}`
+          `${process.env.NEXT_PUBLIC_API_URL}/orders/number/${orderNumber}`,
+            {
+               headers: getAuthHeaders(),
+            }
         );
         const data = await res.json();
 
         if (data.success) {
           setOrder(data.order);
         } else {
-          alert("Order not found");
+          toast.error("Order not found");
           router.push("/");
         }
       } catch (error) {
         console.error("Error fetching order:", error);
-        alert("Failed to load order");
+        toast.error("Failed to load order");
         router.push("/");
       } finally {
         setLoading(false);
@@ -36,7 +50,7 @@ export default function OrderConfirmationPage() {
     if (orderNumber) {
       fetchOrder();
     }
-  }, [orderNumber, router]);
+  }, [orderNumber, router, token, isAuthenticated]);
 
   if (loading) {
     return (
@@ -54,7 +68,7 @@ export default function OrderConfirmationPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Success Message */}
+       
         <div className="bg-white rounded-lg p-8 shadow-sm mb-6 text-center">
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -70,7 +84,6 @@ export default function OrderConfirmationPage() {
           </div>
         </div>
 
-        {/* Order Details */}
         <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
           <h2 className="text-xl font-semibold mb-4">Order Details</h2>
 
@@ -115,7 +128,6 @@ export default function OrderConfirmationPage() {
           </div>
         </div>
 
-        {/* Order Items */}
         <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
           <h2 className="text-xl font-semibold mb-4">Order Items</h2>
 
@@ -144,8 +156,7 @@ export default function OrderConfirmationPage() {
           </div>
         </div>
 
-        {/* Price Summary */}
-        <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
+              <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
           <h2 className="text-xl font-semibold mb-4">Price Summary</h2>
 
           <div className="space-y-2">
@@ -172,17 +183,17 @@ export default function OrderConfirmationPage() {
           </div>
         </div>
 
-        {/* Action Buttons */}
+       
         <div className="flex gap-4">
           <button
             onClick={() => router.push("/")}
-            className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
+            className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition cursor-pointer"
           >
             Continue Shopping
           </button>
           <button
             onClick={() => window.print()}
-            className="flex-1 bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition"
+            className="flex-1 bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition cursor-pointer"
           >
             Print Order
           </button>

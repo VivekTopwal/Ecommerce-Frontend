@@ -34,8 +34,6 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError("");
 
-    console.log("🔐 Attempting admin login with:", formData.email);
-
     try {
       const result = await adminLogin(formData.email, formData.password);
 
@@ -43,7 +41,6 @@ export default function AdminLoginPage() {
 
       if (result.success) {
         toast.success("Admin login successful!");
-        console.log("Redirecting to admin dashboard...");
         router.push("/admin/dashboard");
       } else {
         const errorMsg = result.message || "Invalid admin credentials";

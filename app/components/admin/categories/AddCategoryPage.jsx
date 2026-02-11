@@ -8,9 +8,9 @@ import { CloudUpload, X } from "lucide-react";
 
 export default function AddCategoryPage() {
   const router = useRouter();
-   const { token } = useAuth();
+  const { token } = useAuth();
   const [loading, setLoading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -20,9 +20,9 @@ export default function AddCategoryPage() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -32,32 +32,35 @@ export default function AddCategoryPage() {
 
     try {
       const data = new FormData();
-      data.append('name', formData.name);
-      data.append('description', formData.description);
-      data.append('isPublished', formData.isPublished);
-      
+      data.append("name", formData.name);
+      data.append("description", formData.description);
+      data.append("isPublished", formData.isPublished);
+
       if (formData.icon) {
-        data.append('icon', formData.icon);
+        data.append("icon", formData.icon);
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/add-category`, {
-        method: 'POST',
-         headers: {
-         Authorization: `Bearer ${token}`,
-    },
-        body: data,
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/add-category`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: data,
+        },
+      );
 
       if (res.ok) {
-        toast.success('Category created successfully!');
-        router.push('/admin/categories');
+        toast.success("Category created successfully!");
+        router.push("/admin/categories");
       } else {
         const error = await res.json();
-        toast.error(error.message || 'Failed to create category');
+        toast.error(error.message || "Failed to create category");
       }
     } catch (error) {
-      console.error('Error creating category:', error);
-      toast.error('Failed to create category');
+      console.error("Error creating category:", error);
+      toast.error("Failed to create category");
     } finally {
       setLoading(false);
     }
@@ -75,8 +78,8 @@ export default function AddCategoryPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            <button 
-              onClick={() => router.back()} 
+            <button
+              onClick={() => router.back()}
               className="p-2 rounded-full bg-white hover:bg-red-300 cursor-pointer"
               type="button"
             >
@@ -126,20 +129,25 @@ export default function AddCategoryPage() {
                 accept="image/png, image/jpeg, image/webp"
                 id="categoryImage"
                 className="hidden"
-                onChange={(e) => setFormData(prev => ({ ...prev, icon: e.target.files[0] }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, icon: e.target.files[0] }))
+                }
               />
 
               <label
                 htmlFor="categoryImage"
                 className="block border-2 border-dashed border-gray-300 rounded-lg p-10 text-center cursor-pointer hover:border-green-500 transition bg-gray-50"
               >
-                <CloudUpload className="mx-auto mb-2 text-green-500" size={40} />
+                <CloudUpload
+                  className="mx-auto mb-2 text-green-500"
+                  size={40}
+                />
                 <p className="font-medium text-gray-800">
-                  {formData.icon ? formData.icon.name : "Click to upload category image"}
+                  {formData.icon
+                    ? formData.icon.name
+                    : "Click to upload category image"}
                 </p>
-                <p className="text-xs mt-1 text-gray-500">
-                  (JPEG, PNG, WEBP)
-                </p>
+                <p className="text-xs mt-1 text-gray-500">(JPEG, PNG, WEBP)</p>
               </label>
 
               {formData.icon && (
@@ -160,14 +168,47 @@ export default function AddCategoryPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        const confirmed = window.confirm(
-                          "Are you sure you want to remove the category image?"
+                        toast(
+                          (t) => (
+                            <div className="flex flex-col gap-2 text-center">
+                              <p className="text-sm font-medium">
+                                Are you sure you want to remove the category
+                                image?
+                              </p>
+
+                              <div className="flex justify-center gap-2 mt-2">
+                                <button
+                                  onClick={() => {
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      icon: null,
+                                    }));
+                                    toast.dismiss(t.id);
+                                    toast.success("Category image removed");
+                                  }}
+                                  className="px-3 py-1 text-sm bg-red-600 text-white rounded"
+                                >
+                                  Remove
+                                </button>
+
+                                <button
+                                  onClick={() => toast.dismiss(t.id)}
+                                  className="px-3 py-1 text-sm bg-gray-200 text-black rounded"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ),
+                          {
+                            duration: Infinity,
+                            position: "top-center",
+                          },
                         );
-                        if (confirmed) setFormData(prev => ({ ...prev, icon: null }));
                       }}
                       className="absolute top-2 right-2 bg-black/70 text-white p-1.5 rounded-full
-                                 opacity-0 group-hover:opacity-100 transition
-                                 hover:bg-red-600 hover:cursor-pointer"
+             opacity-0 group-hover:opacity-100 transition
+             hover:bg-red-600 hover:cursor-pointer"
                       aria-label="Remove category image"
                     >
                       <X size={16} />
@@ -208,7 +249,7 @@ export default function AddCategoryPage() {
               disabled={loading}
               className="px-8 py-2 rounded-md bg-green-500 text-white hover:bg-green-600 w-[49%] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creating...' : 'Add Category'}
+              {loading ? "Creating..." : "Add Category"}
             </button>
           </div>
         </form>
@@ -216,8 +257,3 @@ export default function AddCategoryPage() {
     </div>
   );
 }
-
-
-
-
-       

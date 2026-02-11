@@ -65,7 +65,7 @@ export function ShopProvider({ children }) {
     const data = await res.json();
 
     if (data.success) {
-      mutateCart();
+      await mutateCart();
       if (!skipToast) {
         toast.success(data.message || "Added to cart!");
       }
@@ -94,7 +94,7 @@ export function ShopProvider({ children }) {
       const data = await res.json();
 
       if (data.success) {
-        mutateCart();
+        await mutateCart();
         toast.success("Cart updated successfully");
         return { success: true };
       }
@@ -122,8 +122,7 @@ export function ShopProvider({ children }) {
       const data = await res.json();
 
       if (data.success) {
-        mutateCart();
-        toast.success("Item removed from cart");
+        await mutateCart();
         return { success: true };
       }
       return { success: false };
@@ -153,7 +152,7 @@ export function ShopProvider({ children }) {
       const data = await res.json();
 
       if (data.success) {
-        mutateWishlist();
+       await mutateWishlist();
         toast.success(data.isWishlisted ? "Added to wishlist!" : "Removed from wishlist!");
         return { success: true, isWishlisted: data.isWishlisted };
       }

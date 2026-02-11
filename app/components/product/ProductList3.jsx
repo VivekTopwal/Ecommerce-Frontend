@@ -7,6 +7,8 @@ import Link from "next/link";
 import { Shippori_Mincho } from "next/font/google";
 import { useShop } from "@/app/context/ShopContext";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { useAuth } from "@/app/context/AuthContext";
 
 const mincho = Shippori_Mincho({
   subsets: ["latin"],
@@ -26,11 +28,24 @@ const ProductGrid = () => {
   const [buyingNow, setBuyingNow] = useState(null);
   const { addToCart, toggleWishlist, isInWishlist } = useShop();
   const router = useRouter();
+  const { token, isAuthenticated } = useAuth();
+  const getAuthHeaders = () => {
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  };
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`,
+            {
+        headers: getAuthHeaders(),
+          cache: "no-store",
+        }
+        );
+        
         const data = await res.json();
         setProducts(data.products || data);
         console.log("Fetched products:", data);
@@ -40,7 +55,7 @@ const ProductGrid = () => {
     };
 
     fetchProducts();
-  }, []);
+  }, [token, isAuthenticated]);
 
   const handleAddToCart = async (e, productId) => {
     e.preventDefault();
@@ -56,11 +71,11 @@ const ProductGrid = () => {
       if (result.success) {
      
       } else {
-        alert(result.message || "Failed to add to cart");
+        toast.error(result.message || "Failed to add to cart");
       }
     } catch (error) {
       console.error("Add to cart error:", error);
-      alert("Failed to add to cart");
+      toast.error("Failed to add to cart");
     } finally {
       setAddingToCart(null);
     }
@@ -81,11 +96,11 @@ const ProductGrid = () => {
       if (result.success) {
         router.push("/checkout");
       } else {
-        alert(result.message || "Failed to proceed");
+        toast.error(result.message || "Failed to proceed");
       }
     } catch (error) {
       console.error("Buy now error:", error);
-      alert("Failed to proceed");
+      toast.error("Failed to proceed");
     } finally {
       setBuyingNow(null);
     }
@@ -98,11 +113,11 @@ const ProductGrid = () => {
     try {
       const result = await toggleWishlist(productId);
       if (!result.success) {
-        alert("Failed to update wishlist");
+        toast.error("Failed to update wishlist");
       }
     } catch (error) {
       console.error("Wishlist error:", error);
-      alert("Failed to update wishlist");
+      toast.error("Failed to update wishlist");
     }
   };
 

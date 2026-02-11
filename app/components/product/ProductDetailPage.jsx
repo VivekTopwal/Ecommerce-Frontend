@@ -7,6 +7,7 @@ import { Heart, ShoppingCart, Minus, Plus, Star } from "lucide-react";
 import { Shippori_Mincho } from "next/font/google";
 import { useRouter } from "next/navigation";
 import { useShop } from "@/app/context/ShopContext";
+import { useAuth } from "@/app/context/AuthContext";
 
 const mincho = Shippori_Mincho({
   subsets: ["latin"],
@@ -17,6 +18,15 @@ export default function ProductDetail() {
   const router = useRouter();
   const { slug } = useParams();
   const { addToCart, toggleWishlist, isInWishlist } = useShop();
+
+ const { token, isAuthenticated } = useAuth();
+  const getAuthHeaders = () => {
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  };
+
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,6 +45,9 @@ export default function ProductDetail() {
       try {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/admin/products/${slug}`,
+           {
+        headers: getAuthHeaders(),
+        }
         );
         const data = await res.json();
 
@@ -57,7 +70,7 @@ export default function ProductDetail() {
     };
 
     if (slug) fetchProduct();
-  }, [slug]);
+  }, [slug, token, isAuthenticated]);
 
   const calculateDiscount = () => {
     if (product.productPrice > product.salePrice) {
@@ -87,7 +100,6 @@ export default function ProductDetail() {
     setBuyingNow(true);
     
     try {
-      // Store the buy now item in session storage
       const buyNowItem = {
         product: {
           _id: product._id,
@@ -105,8 +117,7 @@ export default function ProductDetail() {
       };
 
       sessionStorage.setItem("buyNowItem", JSON.stringify(buyNowItem));
-      
-      // Redirect to checkout with buy now flag
+   
       router.push("/checkout?buyNow=true");
     } catch (error) {
       console.error("Buy now error:", error);
@@ -193,7 +204,7 @@ export default function ProductDetail() {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 bg-white rounded-lg shadow-sm p-6 lg:p-8">
-          {/* Image Section */}
+         
           <div className="space-y-4">
             <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
               {activeImage && (
@@ -251,7 +262,7 @@ export default function ProductDetail() {
             )}
           </div>
 
-          {/* Product Info Section */}
+        
           <div className="space-y-6">
             <div>
               <p className="text-sm text-orange-500 font-semibold uppercase tracking-wider mb-2">

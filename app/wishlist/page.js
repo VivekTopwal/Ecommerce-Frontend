@@ -6,26 +6,65 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
+import toast from "react-hot-toast";
 
 export default function WishlistPage() {
   const router = useRouter();
   const { wishlist, toggleWishlist, addToCart } = useShop();
   const [loading, setLoading] = useState({});
 
-  const handleRemove = async (productId) => {
-    if (confirm("Remove this item from wishlist?")) {
-      await toggleWishlist(productId);
+ const handleRemove = (productId) => {
+  toast(
+    (t) => (
+      <div className="flex flex-col gap-2 text-center">
+        <p className="text-sm font-medium">
+          Remove this item from your wishlist?
+        </p>
+
+        <div className="flex justify-center gap-2 mt-2">
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              const loadingToast = toast.loading("Removing from wishlist...");
+
+              try {
+                await toggleWishlist(productId);
+                toast.dismiss(loadingToast);
+                toast.success("Removed from wishlist");
+              } catch (error) {
+                toast.dismiss(loadingToast);
+                toast.error("Failed to remove from wishlist");
+              }
+            }}
+            className="px-3 py-1 text-sm bg-red-600 text-white rounded"
+          >
+            Remove
+          </button>
+
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1 text-sm bg-gray-200 text-black rounded"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ),
+    {
+      duration: Infinity,
+      position: "top-center",
     }
-  };
+  );
+};
 
   const handleAddToCart = async (product) => {
     setLoading(prev => ({ ...prev, [product._id]: true }));
     const result = await addToCart(product._id, 1);
     
     if (result.success) {
-      alert(result.message || "Added to cart!");
+      toast.success(result.message || "Added to cart!");
     } else {
-      alert(result.message || "Failed to add to cart");
+      toast.error(result.message || "Failed to add to cart");
     }
     setLoading(prev => ({ ...prev, [product._id]: false }));
   };
@@ -40,7 +79,7 @@ export default function WishlistPage() {
     }
     
     setLoading({ all: false });
-    alert("All items added to cart!");
+    toast.success("All items added to cart!");
   };
 
   if (!wishlist || wishlist.products.length === 0) {
@@ -68,7 +107,7 @@ export default function WishlistPage() {
      <ProtectedRoute>
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
-        {/* Breadcrumb */}
+      
         <div className="mb-6">
           <Link href="/" className="text-gray-600 hover:text-orange-500 inline-flex items-center gap-2">
             <ArrowLeft size={18} />
@@ -76,7 +115,7 @@ export default function WishlistPage() {
           </Link>
         </div>
 
-        {/* Header */}
+       
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">My Wishlist</h1>
