@@ -33,10 +33,7 @@ export default function OrdersPage() {
   const [endDate, setEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({});
-  const [totalRevenue, setTotalRevenue] = useState(0);
-  const [stats, setStats] = useState([]);
   const [limit] = useState(10);
-
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [updatingStatus, setUpdatingStatus] = useState(null);
@@ -78,8 +75,6 @@ export default function OrdersPage() {
         if (data.success) {
           setOrders(data.orders);
           setPagination(data.pagination);
-          setTotalRevenue(data.totalRevenue);
-          setStats(data.stats);
           setCurrentPage(page);
         }
       } catch (err) {
@@ -142,25 +137,27 @@ export default function OrdersPage() {
     }
   };
 
-  const handleViewOrder = async (orderId) => {
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/orders/${orderId}`,
-        { headers: getAuthHeaders() },
-      );
+  // const handleViewOrder = async (orderId) => {
+  //   try {
+  //     const res = await fetch(
+  //       `${process.env.NEXT_PUBLIC_API_URL}/admin/orders/${orderId}`,
+  //       { headers: getAuthHeaders() },
+  //     );
 
-      const data = await res.json();
+  //     const data = await res.json();
+  //     if (data.success) {
+  //       setSelectedOrder(data.order);
+  //       setShowOrderModal(true);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching order:", error);
+  //     toast.error("Failed to load order details");
+  //   }
+  // };
 
-      if (data.success) {
-        setSelectedOrder(data.order);
-        setShowOrderModal(true);
-      }
-    } catch (error) {
-      console.error("Error fetching order:", error);
-      toast.error("Failed to load order details");
-    }
-  };
-
+    const handleViewOrder = (orderId) => {
+  router.push(`/admin/orders/${orderId}`);
+};
 
   const handleFilter = () => {
     if (startDate && endDate) {
@@ -329,6 +326,8 @@ export default function OrdersPage() {
     printWindow.print();
   };
 
+
+
   const formatDateTime = (dateString) => {
     if (!dateString) return "-";
     return (
@@ -355,13 +354,6 @@ export default function OrdersPage() {
       shipped: "bg-purple-500 text-white",
     };
     return colors[status?.toLowerCase()] || "bg-gray-500 text-white";
-  };
-
-  const getStatCount = (statusName) => {
-    const stat = stats.find(
-      (s) => s._id?.toLowerCase() === statusName.toLowerCase(),
-    );
-    return stat?.count || 0;
   };
 
   const handlePageChange = (page) => {
@@ -396,78 +388,7 @@ export default function OrdersPage() {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <TrendingUp size={20} className="text-blue-600" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Revenue</p>
-              <p className="text-lg font-bold text-gray-900">
-                ${totalRevenue?.toFixed(2) || "0.00"}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <Clock size={20} className="text-orange-600" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Pending</p>
-              <p className="text-lg font-bold text-gray-900">
-                {getStatCount("pending")}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Package size={20} className="text-blue-600" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Processing</p>
-              <p className="text-lg font-bold text-gray-900">
-                {getStatCount("processing")}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-100 rounded-lg">
-              <CheckCircle size={20} className="text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Delivered</p>
-              <p className="text-lg font-bold text-gray-900">
-                {getStatCount("delivered")}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <XCircle size={20} className="text-red-600" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Cancelled</p>
-              <p className="text-lg font-bold text-gray-900">
-                {getStatCount("cancelled")}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
+     
       <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
          
@@ -476,7 +397,7 @@ export default function OrdersPage() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name or order#"
+              placeholder="Search by name or order"
               className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
             <SearchIcon
@@ -532,14 +453,12 @@ export default function OrdersPage() {
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
           </div>
-
-          {/* Download */}
           <button
             onClick={handleDownloadAll}
             className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 text-sm rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
           >
             <Download size={16} />
-            Download CSV
+            Download All Orders
           </button>
         </div>
 
@@ -611,10 +530,10 @@ export default function OrdersPage() {
                   Status
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                  Update
+                  Actions
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                  Actions
+                  Invoice
                 </th>
               </tr>
             </thead>
@@ -692,7 +611,7 @@ export default function OrdersPage() {
                             handleUpdateStatus(order._id, e.target.value)
                           }
                           disabled={updatingStatus === order._id}
-                          className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none bg-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg text-sm focus:outline-none appearance-none bg-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <option value="pending">Pending</option>
                           <option value="processing">Processing</option>
@@ -746,7 +665,6 @@ export default function OrdersPage() {
           </table>
         </div>
 
-        {/* Pagination */}
         <div className="flex justify-between items-center px-6 py-4 border-t border-gray-200 bg-gray-50">
           <div className="text-sm text-gray-600">
             Showing {orders.length} of {pagination.totalDocs || 0} orders

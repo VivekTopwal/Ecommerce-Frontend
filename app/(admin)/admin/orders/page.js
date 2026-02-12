@@ -1,6 +1,6 @@
 import OrdersPage from "@/app/components/admin/orders/OrdersPage";
 
-export default function Products() {
+export default function Order() {
     return (
         <main className="wrap">          
             <OrdersPage />

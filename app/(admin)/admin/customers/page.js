@@ -1,6 +1,6 @@
 import CustomersPage from "@/app/components/admin/customers/CustomersPage";
 
-export default function Products() {
+export default function Custom() {
     return (
         <main className="wrap">          
             <CustomersPage />

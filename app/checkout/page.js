@@ -96,13 +96,14 @@ export default function CheckoutPage() {
         }));
     };
 
-    const calculateShipping = () => {
-        return cart.totalAmount > 500 ? 0 : 50;
-    };
+ const calculateShipping = () => {
+    const subtotal = calculateSubtotal();
+    return subtotal > 500 ? 0 : 50;
+};
 
-    const calculateTax = () => {
-        return Number((cart.totalAmount * 0.1).toFixed(2));
-    };
+  const calculateTax = () => {
+    return Number((calculateSubtotal() * 0.1).toFixed(2));
+};
 
     const calculateTotal = () => {
         return Number((calculateSubtotal() + calculateShipping() + calculateTax()).toFixed(2));
@@ -488,7 +489,7 @@ export default function CheckoutPage() {
 
 
                                     <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
-                                        {cart.items.map((item) => (
+                                       {checkoutItems.map((item) => (
                                             <div key={item._id} className="flex gap-3">
                                                 <Image
                                                     src={item.product.mainImage}
