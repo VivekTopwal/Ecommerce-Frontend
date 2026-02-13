@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { CheckCircle, Package, Truck, MapPin, CreditCard } from "lucide-react";
+import { CheckCircle, Package, Truck, CreditCard } from "lucide-react";
 import { useAuth } from "@/app/context/AuthContext";
 import toast from "react-hot-toast";
 

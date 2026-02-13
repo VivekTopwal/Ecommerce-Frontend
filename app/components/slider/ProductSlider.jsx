@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
@@ -9,13 +9,128 @@ import Link from "next/link";
 import Image from "next/image";
 import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { Shippori_Mincho } from "next/font/google";
+import { useShop } from "@/app/context/ShopContext";
+import { useAuth } from "@/app/context/AuthContext";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 const mincho = Shippori_Mincho({
   subsets: ["latin"],
   weight: ["400", "600"],
 });
 
+const formatPrice = (price) => {
+  return Number(price).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
 const ProductSlider = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [addingToCart, setAddingToCart] = useState(null);
+  const [buyingNow, setBuyingNow] = useState(null);
+  const { addToCart, toggleWishlist, isInWishlist } = useShop();
+  const { token, isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  const getAuthHeaders = () => {
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  };
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
+          headers: getAuthHeaders(),
+          cache: "no-store",
+        });
+        const data = await res.json();
+        // Get first 10 products for the slider (or all if less than 10)
+        setProducts((data.products || data).slice(0, 10));
+      } catch (error) {
+        console.error("Failed to fetch products", error);
+        toast.error("Failed to load products");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [token, isAuthenticated]);
+
+  const handleAddToCart = async (e, productId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (addingToCart || buyingNow) return;
+
+    setAddingToCart(productId);
+    try {
+      const result = await addToCart(productId, 1);
+      if (!result.success) {
+        toast.error(result.message || "Failed to add to cart");
+      }
+    } catch (error) {
+      console.error("Add to cart error:", error);
+      toast.error("Failed to add to cart");
+    } finally {
+      setAddingToCart(null);
+    }
+  };
+
+  const handleBuyNow = async (e, productId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (addingToCart || buyingNow) return;
+
+    setBuyingNow(productId);
+    try {
+      const result = await addToCart(productId, 1, true);
+      if (result.success) {
+        router.push("/checkout");
+      } else {
+        toast.error(result.message || "Failed to proceed");
+      }
+    } catch (error) {
+      console.error("Buy now error:", error);
+      toast.error("Failed to proceed");
+    } finally {
+      setBuyingNow(null);
+    }
+  };
+
+  const handleToggleWishlist = async (e, productId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const result = await toggleWishlist(productId);
+      if (!result.success) {
+        toast.error("Failed to update wishlist");
+      }
+    } catch (error) {
+      console.error("Wishlist error:", error);
+      toast.error("Failed to update wishlist");
+    }
+  };
+
+  if (loading) {
+    return (
+      <section className="container py-8">
+        <div className="container">
+          <h2 className={`text-center text-[30px] mb-8 ${mincho.className}`}>
+            New Arrivals
+          </h2>
+          <div className="text-center py-12">Loading products...</div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="container py-8">
       <div className="container">
@@ -37,577 +152,133 @@ const ProductSlider = () => {
             }}
             modules={[Navigation, FreeMode, Mousewheel]}
             className="mySwiper"
+            breakpoints={{
+              320: {
+                slidesPerView: 1,
+                spaceBetween: 10,
+              },
+              640: {
+                slidesPerView: 2,
+                spaceBetween: 15,
+              },
+              768: {
+                slidesPerView: 3,
+                spaceBetween: 15,
+              },
+              1024: {
+                slidesPerView: 4,
+                spaceBetween: 20,
+              },
+              1280: {
+                slidesPerView: 5,
+                spaceBetween: 20,
+              },
+            }}
           >
-            <SwiperSlide>
-              <div className="bg-white overflow-hidden shadow-sm rounded">
-                <div className="relative">
-                  <Image
-                    src="/images/cat1.webp"
-                    alt="Kamdhenu Lotus Pyrite"
-                    width={400}
-                    height={400}
-                    className="w-full object-cover"
-                  />
+            {products.map((product) => {
+              const isWishlisted = isInWishlist(product._id);
+              const isAddingToCart = addingToCart === product._id;
+              const isBuyingNow = buyingNow === product._id;
+              const isAnyLoading = isAddingToCart || isBuyingNow;
+              const discountPercent = product.productPrice
+                ? Math.round(
+                    ((product.productPrice - product.salePrice) /
+                      product.productPrice) *
+                      100
+                  )
+                : 0;
 
-                  <button className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full shadow flex items-center justify-center cursor-pointer">
-                    <Heart size={18} />
-                  </button>
+              return (
+                <SwiperSlide key={product._id}>
+                  <Link href={`/product/${product._id}`}>
+                    <div className="bg-white overflow-hidden shadow-sm rounded">
+                      <div className="relative">
+                        {product.mainImage ? (
+                          <Image
+                            src={product.mainImage}
+                            alt={product.name}
+                            width={400}
+                            height={400}
+                            className="w-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-[400px] bg-gray-200 flex items-center justify-center">
+                            <span className="text-gray-400">No image</span>
+                          </div>
+                        )}
 
-                  <span className="absolute top-3 left-3 bg-pink-600 text-white text-xs px-2 py-1 rounded">
-                    27% off
-                  </span>
-                </div>
+                        <button
+                          onClick={(e) => handleToggleWishlist(e, product._id)}
+                          className={`absolute top-3 right-3 w-9 h-9 bg-white rounded-full shadow flex items-center justify-center cursor-pointer transition-colors ${
+                            isWishlisted ? "text-red-500" : ""
+                          }`}
+                        >
+                          <Heart
+                            size={18}
+                            fill={isWishlisted ? "currentColor" : "none"}
+                          />
+                        </button>
 
-                <div className="p-4 text-center space-y-2">
-                  <p className="text-[13px] text-gray-500 mb-0.5">
-                    Mindful Living
-                  </p>
-                  <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
-                    Kamdhenu Lotus Pyrite
-                  </h3>
-                  <p
-                    className={`text-[13px] text-gray-500 ${mincho.className}`}
-                  >
-                    Nurturing | Prosperity | Harmony
-                  </p>
-                  <div className="flex justify-center gap-1 text-sm">
-                    <span className="text-yellow-400">★★★★⯪</span>
-                    <span>4.9</span>
-                    <span className="text-gray-800">(3141)</span>
-                  </div>
+                        {discountPercent > 0 && (
+                          <span className="absolute top-3 left-3 bg-pink-600 text-white text-xs px-2 py-1 rounded">
+                            {discountPercent}% off
+                          </span>
+                        )}
+                      </div>
 
-                  <div className={`text-lg ${mincho.className}`}>
-                    <span className="text-black">MRP: </span>
-                    <span className="line-through text-gray-600 mr-0.5">
-                      ₹1,499.00
-                    </span>
-                    <span className="text-red-600">₹999.00</span>
-                  </div>
+                      <div className="p-4 text-center space-y-2">
+                        <p className="text-[13px] text-gray-500 mb-0.5">
+                          Mindful Living
+                        </p>
+                        <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
+                          {product.name}
+                        </h3>
+                       
+                        <div className="flex justify-center gap-1 text-sm">
+                          <span className="text-yellow-400">★★★★⯪</span>
+                          <span>4.9</span>
+                          <span className="text-gray-800">(3141)</span>
+                        </div>
 
-                  <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
-                    {" "}
-                    Add to Cart
-                  </button>
-                  <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
-                    BUY NOW
-                  </button>
-                </div>
-              </div>
-            </SwiperSlide>
+                        <div className={`text-lg ${mincho.className}`}>
+                          {product.productPrice &&
+                            product.productPrice !== product.salePrice && (
+                              <>
+                                <span className="text-black">MRP: </span>
+                                <span className="line-through text-gray-600 mr-0.5">
+                                  ₹{formatPrice(product.productPrice)}
+                                </span>
+                              </>
+                            )}
+                          <span className="text-red-600">
+                            ₹{formatPrice(product.salePrice)}
+                          </span>
+                        </div>
 
-            <SwiperSlide>
-              <div className="bg-white overflow-hidden shadow-sm rounded">
-                <div className="relative">
-                  <Image
-                    src="/images/cat2.webp"
-                    alt="Sacred Twin Cow Harmon"
-                    width={400}
-                    height={400}
-                    className="w-full object-cover"
-                  />
-
-                  <button className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full shadow flex items-center justify-center cursor-pointer">
-                    <Heart size={18} />
-                  </button>
-
-                  <span className="absolute top-3 left-3 bg-pink-600 text-white text-xs px-2 py-1 rounded">
-                    7% off
-                  </span>
-                </div>
-
-                <div className="p-4 text-center space-y-2">
-                  <p className="text-[13px] text-gray-500 mb-0.5">
-                    Mindful Living
-                  </p>
-                  <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
-                    Sacred Cow Harmony
-                  </h3>
-                  <p
-                    className={`text-[13px] text-gray-500 ${mincho.className}`}
-                  >
-                    Harmony | Nurture | Abundance
-                  </p>
-                  <div className="flex justify-center gap-1 text-sm">
-                    <span className="text-yellow-400">★★★★⯪</span>
-                    <span>4.9</span>
-                    <span className="text-gray-800">(3141)</span>
-                  </div>
-
-                  <div className={`text-lg ${mincho.className}`}>
-                    <span className="text-black">MRP: </span>
-                    <span className="line-through text-gray-600 mr-0.5">
-                      ₹1,899.00
-                    </span>
-                    <span className="text-red-600">₹1,299.00</span>
-                  </div>
-
-                  <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
-                    {" "}
-                    Add to Cart
-                  </button>
-                  <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
-                    BUY NOW
-                  </button>
-                </div>
-              </div>
-            </SwiperSlide>
-
-            <SwiperSlide>
-              <div className="bg-white overflow-hidden shadow-sm rounded">
-                <div className="relative">
-                  <Image
-                    src="/images/cat3.webp"
-                    alt="King & Queen Crystal"
-                    width={400}
-                    height={400}
-                    className="w-full object-cover"
-                  />
-
-                  <button className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full shadow flex items-center justify-center cursor-pointer">
-                    <Heart size={18} />
-                  </button>
-
-                  <span className="absolute top-3 left-3 bg-pink-600 text-white text-xs px-2 py-1 rounded">
-                    17% off
-                  </span>
-                </div>
-
-                <div className="p-4 text-center space-y-2">
-                  <p className="text-[13px] text-gray-500 mb-0.5">
-                    Mindful Living
-                  </p>
-                  <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
-                    King & Queen Crystal
-                  </h3>
-                  <p
-                    className={`text-[13px] text-gray-500 ${mincho.className}`}
-                  >
-                    Strategic | Prosperous | Protective
-                  </p>
-                  <div className="flex justify-center gap-1 text-sm">
-                    <span className="text-yellow-400">★★★★⯪</span>
-                    <span>4.9</span>
-                    <span className="text-gray-800">(3141)</span>
-                  </div>
-
-                  <div className={`text-lg ${mincho.className}`}>
-                    <span className="text-black">MRP: </span>
-                    <span className="line-through text-gray-600 mr-0.5">
-                      ₹1,499.00
-                    </span>
-                    <span className="text-red-600">₹799.00</span>
-                  </div>
-
-                  <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
-                    {" "}
-                    Add to Cart
-                  </button>
-                  <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
-                    BUY NOW
-                  </button>
-                </div>
-              </div>
-            </SwiperSlide>
-
-            <SwiperSlide>
-              <div className="bg-white overflow-hidden shadow-sm rounded">
-                <div className="relative">
-                  <Image
-                    src="/images/cat4.webp"
-                    alt="Lord Narasimha Pyrite"
-                    width={400}
-                    height={400}
-                    className="w-full object-cover"
-                  />
-
-                  <button className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full shadow flex items-center justify-center cursor-pointer">
-                    <Heart size={18} />
-                  </button>
-
-                  <span className="absolute top-3 left-3 bg-pink-600 text-white text-xs px-2 py-1 rounded">
-                    27% off
-                  </span>
-                </div>
-
-                <div className="p-4 text-center space-y-2">
-                  <p className="text-[13px] text-gray-500 mb-0.5">
-                    Mindful Living
-                  </p>
-                  <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
-                    Lord Narasimha Pyrite
-                  </h3>
-                  <p
-                    className={`text-[13px] text-gray-500 ${mincho.className}`}
-                  >
-                    Protection | Strength | Abundance
-                  </p>
-                  <div className="flex justify-center gap-1 text-sm">
-                    <span className="text-yellow-400">★★★★⯪</span>
-                    <span>4.9</span>
-                    <span className="text-gray-800">(3141)</span>
-                  </div>
-
-                  <div className={`text-lg ${mincho.className}`}>
-                    <span className="text-black">MRP: </span>
-                    <span className="line-through text-gray-600 mr-0.5">
-                      ₹1,499.00
-                    </span>
-                    <span className="text-red-600">₹799.00</span>
-                  </div>
-
-                  <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
-                    {" "}
-                    Add to Cart
-                  </button>
-                  <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
-                    BUY NOW
-                  </button>
-                </div>
-              </div>
-            </SwiperSlide>
-
-            <SwiperSlide>
-              <div className="bg-white overflow-hidden shadow-sm rounded">
-                <div className="relative">
-                  <Image
-                    src="/images/cat5.webp"
-                    alt="Kathakali Netram Pyrite"
-                    width={400}
-                    height={400}
-                    className="w-full object-cover"
-                  />
-
-                  <button className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full shadow flex items-center justify-center cursor-pointer">
-                    <Heart size={18} />
-                  </button>
-
-                  <span className="absolute top-3 left-3 bg-pink-600 text-white text-xs px-2 py-1 rounded">
-                    10% off
-                  </span>
-                </div>
-
-                <div className="p-4 text-center space-y-2">
-                  <p className="text-[13px] text-gray-500 mb-0.5">
-                    Mindful Living
-                  </p>
-                  <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
-                    Kathakali Pyrite
-                  </h3>
-                  <p
-                    className={`text-[13px] text-gray-500 ${mincho.className}`}
-                  >
-                    Focus | Prosperity | Protection
-                  </p>
-                  <div className="flex justify-center gap-1 text-sm">
-                    <span className="text-yellow-400">★★★★⯪</span>
-                    <span>4.9</span>
-                    <span className="text-gray-800">(3141)</span>
-                  </div>
-
-                  <div className={`text-lg ${mincho.className}`}>
-                    <span className="text-black">MRP: </span>
-                    <span className="line-through text-gray-600 mr-0.5">
-                      ₹1,499.00
-                    </span>
-                    <span className="text-red-600">₹999.00</span>
-                  </div>
-
-                  <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
-                    {" "}
-                    Add to Cart
-                  </button>
-                  <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
-                    BUY NOW
-                  </button>
-                </div>
-              </div>
-            </SwiperSlide>
-
-            <SwiperSlide>
-              <div className="bg-white overflow-hidden shadow-sm rounded">
-                <div className="relative">
-                  <Image
-                    src="/images/cat6.webp"
-                    alt="Buddha Pyrite-Lapis"
-                    width={400}
-                    height={400}
-                    className="w-full object-cover"
-                  />
-
-                  <button className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full shadow flex items-center justify-center cursor-pointer">
-                    <Heart size={18} />
-                  </button>
-
-                  <span className="absolute top-3 left-3 bg-pink-600 text-white text-xs px-2 py-1 rounded">
-                    17% off
-                  </span>
-                </div>
-
-                <div className="p-4 text-center space-y-2">
-                  <p className="text-[13px] text-gray-500 mb-0.5">
-                    Mindful Living
-                  </p>
-                  <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
-                    Buddha Pyrite-Lapis
-                  </h3>
-                  <p
-                    className={`text-[13px] text-gray-500 ${mincho.className}`}
-                  >
-                    Grace | Prosperity | Elegance
-                  </p>
-                  <div className="flex justify-center gap-1 text-sm">
-                    <span className="text-yellow-400">★★★★⯪</span>
-                    <span>4.9</span>
-                    <span className="text-gray-800">(3141)</span>
-                  </div>
-
-                  <div className={`text-lg ${mincho.className}`}>
-                    <span className="text-black">MRP: </span>
-                    <span className="line-through text-gray-600 mr-0.5">
-                      ₹1,499.00
-                    </span>
-                    <span className="text-red-600">₹799.00</span>
-                  </div>
-
-                  <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
-                    {" "}
-                    Add to Cart
-                  </button>
-                  <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
-                    BUY NOW
-                  </button>
-                </div>
-              </div>
-            </SwiperSlide>
-
-            <SwiperSlide>
-              <div className="bg-white overflow-hidden shadow-sm rounded">
-                <div className="relative">
-                  <Image
-                    src="/images/cat7.webp"
-                    alt="Pyrite-Lapis Peacock
-"
-                    width={400}
-                    height={400}
-                    className="w-full object-cover"
-                  />
-
-                  <button className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full shadow flex items-center justify-center cursor-pointer">
-                    <Heart size={18} />
-                  </button>
-
-                  <span className="absolute top-3 left-3 bg-pink-600 text-white text-xs px-2 py-1 rounded">
-                    27% off
-                  </span>
-                </div>
-
-                <div className="p-4 text-center space-y-2">
-                  <p className="text-[13px] text-gray-500 mb-0.5">
-                    Mindful Living
-                  </p>
-                  <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
-                    Pyrite-Lapis Peacock
-                  </h3>
-                  <p
-                    className={`text-[13px] text-gray-500 ${mincho.className}`}
-                  >
-                    Grace I Wisdom I Abundance
-                  </p>
-                  <div className="flex justify-center gap-1 text-sm">
-                    <span className="text-yellow-400">★★★★⯪</span>
-                    <span>4.9</span>
-                    <span className="text-gray-800">(3141)</span>
-                  </div>
-
-                  <div className={`text-lg ${mincho.className}`}>
-                    <span className="text-black">MRP: </span>
-                    <span className="line-through text-gray-600 mr-0.5">
-                      ₹1,999.00
-                    </span>
-                    <span className="text-red-600">₹1,799.00</span>
-                  </div>
-
-                  <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
-                    {" "}
-                    Add to Cart
-                  </button>
-                  <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
-                    BUY NOW
-                  </button>
-                </div>
-              </div>
-            </SwiperSlide>
-
-            <SwiperSlide>
-              <div className="bg-white overflow-hidden shadow-sm rounded">
-                <div className="relative">
-                  <Image
-                    src="/images/cat8.webp"
-                    alt="Mahadev Trishul Pyrite"
-                    width={400}
-                    height={400}
-                    className="w-full object-cover"
-                  />
-
-                  <button className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full shadow flex items-center justify-center cursor-pointer">
-                    <Heart size={18} />
-                  </button>
-
-                  <span className="absolute top-3 left-3 bg-pink-600 text-white text-xs px-2 py-1 rounded">
-                    7% off
-                  </span>
-                </div>
-
-                <div className="p-4 text-center space-y-2">
-                  <p className="text-[13px] text-gray-500 mb-0.5">
-                    Mindful Living
-                  </p>
-                  <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
-                    Mahadev Trishul Pyrite
-                  </h3>
-                  <p
-                    className={`text-[13px] text-gray-500 ${mincho.className}`}
-                  >
-                    Power | Protection | Presence
-                  </p>
-                  <div className="flex justify-center gap-1 text-sm">
-                    <span className="text-yellow-400">★★★★⯪</span>
-                    <span>4.9</span>
-                    <span className="text-gray-800">(3141)</span>
-                  </div>
-
-                  <div className={`text-lg ${mincho.className}`}>
-                    <span className="text-black">MRP: </span>
-                    <span className="line-through text-gray-600 mr-0.5">
-                      ₹1,499.00
-                    </span>
-                    <span className="text-red-600">₹1,199.00</span>
-                  </div>
-
-                  <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
-                    {" "}
-                    Add to Cart
-                  </button>
-                  <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
-                    BUY NOW
-                  </button>
-                </div>
-              </div>
-            </SwiperSlide>
-
-            <SwiperSlide>
-              <div className="bg-white overflow-hidden shadow-sm rounded">
-                <div className="relative">
-                  <Image
-                    src="/images/cat9.webp"
-                    alt="Chess-Queen Tourmaline"
-                    width={400}
-                    height={400}
-                    className="w-full object-cover"
-                  />
-
-                  <button className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full shadow flex items-center justify-center cursor-pointer">
-                    <Heart size={18} />
-                  </button>
-
-                  <span className="absolute top-3 left-3 bg-pink-600 text-white text-xs px-2 py-1 rounded">
-                    27% off
-                  </span>
-                </div>
-
-                <div className="p-4 text-center space-y-2">
-                  <p className="text-[13px] text-gray-500 mb-0.5">
-                    Mindful Living
-                  </p>
-                  <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
-                    Chess Tourmaline
-                  </h3>
-                  <p
-                    className={`text-[13px] text-gray-500 ${mincho.className}`}
-                  >
-                    Strategic | Prosperous | Protective
-                  </p>
-                  <div className="flex justify-center gap-1 text-sm">
-                    <span className="text-yellow-400">★★★★⯪</span>
-                    <span>4.8</span>
-                    <span className="text-gray-800">(241)</span>
-                  </div>
-
-                  <div className={`text-lg ${mincho.className}`}>
-                    <span className="text-black">MRP: </span>
-                    <span className="line-through text-gray-600 mr-0.5">
-                      ₹2,499.00
-                    </span>
-                    <span className="text-red-600">₹2,199.00</span>
-                  </div>
-
-                  <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
-                    {" "}
-                    Add to Cart
-                  </button>
-                  <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
-                    BUY NOW
-                  </button>
-                </div>
-              </div>
-            </SwiperSlide>
-
-            <SwiperSlide>
-              <div className="bg-white overflow-hidden shadow-sm rounded">
-                <div className="relative">
-                  <Image
-                    src="/images/cat10.webp"
-                    alt="Chess-King Pyrite"
-                    width={400}
-                    height={400}
-                    className="w-full object-cover"
-                  />
-
-                  <button className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full shadow flex items-center justify-center cursor-pointer">
-                    <Heart size={18} />
-                  </button>
-
-                  <span className="absolute top-3 left-3 bg-pink-600 text-white text-xs px-2 py-1 rounded">
-                    9% off
-                  </span>
-                </div>
-
-                <div className="p-4 text-center space-y-2">
-                  <p className="text-[13px] text-gray-500 mb-0.5">
-                    Mindful Living
-                  </p>
-                  <h3 className={`text-[20px] mb-0.5 ${mincho.className}`}>
-                    Chess-King Pyrite
-                  </h3>
-                  <p
-                    className={`text-[13px] text-gray-500 ${mincho.className}`}
-                  >
-                    Strategic | Prosperous | Protective
-                  </p>
-                  <div className="flex justify-center gap-1 text-sm">
-                    <span className="text-yellow-400">★★★★⯪</span>
-                    <span>4.9</span>
-                    <span className="text-gray-800">(3141)</span>
-                  </div>
-
-                  <div className={`text-lg ${mincho.className}`}>
-                    <span className="text-black">MRP: </span>
-                    <span className="line-through text-gray-600 mr-0.5">
-                      ₹1,999.00
-                    </span>
-                    <span className="text-red-600">₹1,099.00</span>
-                  </div>
-
-                  <button className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5">
-                    {" "}
-                    Add to Cart
-                  </button>
-                  <button className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:border-[rgba(0,0,0,0.5)]">
-                    BUY NOW
-                  </button>
-                </div>
-              </div>
-            </SwiperSlide>
+                        <button
+                          onClick={(e) => handleAddToCart(e, product._id)}
+                          disabled={isAnyLoading || product.quantity === 0}
+                          className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        >
+                          {isAddingToCart
+                            ? "Adding..."
+                            : product.quantity === 0
+                            ? "Out of Stock"
+                            : "Add to Cart"}
+                        </button>
+                        <button
+                          onClick={(e) => handleBuyNow(e, product._id)}
+                          disabled={isAnyLoading || product.quantity === 0}
+                          className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:bg-orange-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isBuyingNow ? "Processing..." : "BUY NOW"}
+                        </button>
+                      </div>
+                    </div>
+                  </Link>
+                </SwiperSlide>
+              );
+            })}
 
             <SwiperSlide>
               <div className="relative h-[520px] rounded-md bg-gradient-to-b from-[#2a2a2a] to-[#1b1b1b] overflow-hidden px-8 py-10">

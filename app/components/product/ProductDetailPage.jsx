@@ -8,6 +8,7 @@ import { Shippori_Mincho } from "next/font/google";
 import { useRouter } from "next/navigation";
 import { useShop } from "@/app/context/ShopContext";
 import { useAuth } from "@/app/context/AuthContext";
+import toast from "react-hot-toast";
 
 const mincho = Shippori_Mincho({
   subsets: ["latin"],
@@ -18,15 +19,7 @@ export default function ProductDetail() {
   const router = useRouter();
   const { slug } = useParams();
   const { addToCart, toggleWishlist, isInWishlist } = useShop();
-
- const { token, isAuthenticated } = useAuth();
-  const getAuthHeaders = () => {
-    return {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    };
-  };
-
+  const { isAuthenticated } = useAuth();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -43,11 +36,9 @@ export default function ProductDetail() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
+        // Use PUBLIC route - no auth needed for viewing products
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/admin/products/${slug}`,
-           {
-        headers: getAuthHeaders(),
-        }
+          `${process.env.NEXT_PUBLIC_API_URL}/products/${slug}`
         );
         const data = await res.json();
 
@@ -55,28 +46,32 @@ export default function ProductDetail() {
           const p = data.product;
 
           const imageList = [p.mainImage, ...(p.featureImages || [])].filter(
-            Boolean,
+            Boolean
           );
 
           setProduct(p);
           setImages(imageList);
           setActiveImage(imageList[0] || null);
+        } else {
+          console.error("Product not found");
+          setProduct(null);
         }
       } catch (error) {
         console.error("Failed to fetch product", error);
+        setProduct(null);
       } finally {
         setLoading(false);
       }
     };
 
     if (slug) fetchProduct();
-  }, [slug, token, isAuthenticated]);
+  }, [slug]);
 
   const calculateDiscount = () => {
     if (product.productPrice > product.salePrice) {
       return Math.round(
         ((product.productPrice - product.salePrice) / product.productPrice) *
-          100,
+          100
       );
     }
     return 0;
@@ -84,21 +79,33 @@ export default function ProductDetail() {
 
   const handleQuantityChange = (action) => {
     if (action === "increase" && quantity < product.quantity) {
-      setQuantity(prev => prev + 1);
+      setQuantity((prev) => prev + 1);
     } else if (action === "decrease" && quantity > 1) {
-      setQuantity(prev => prev - 1);
+      setQuantity((prev) => prev - 1);
     }
   };
 
   const handleAddToCart = async () => {
+    if (!isAuthenticated()) {
+      toast.error("Please login to add items to cart");
+      router.push("/login");
+      return;
+    }
+
     setAddingToCart(true);
     const result = await addToCart(product._id, quantity);
     setAddingToCart(false);
   };
 
   const handleBuyNow = async () => {
+    if (!isAuthenticated()) {
+      toast.error("Please login to purchase");
+      router.push("/login");
+      return;
+    }
+
     setBuyingNow(true);
-    
+
     try {
       const buyNowItem = {
         product: {
@@ -117,7 +124,7 @@ export default function ProductDetail() {
       };
 
       sessionStorage.setItem("buyNowItem", JSON.stringify(buyNowItem));
-   
+
       router.push("/checkout?buyNow=true");
     } catch (error) {
       console.error("Buy now error:", error);
@@ -128,6 +135,12 @@ export default function ProductDetail() {
   };
 
   const handleToggleWishlist = async () => {
+    if (!isAuthenticated()) {
+      toast.error("Please login to add items to wishlist");
+      router.push("/login");
+      return;
+    }
+
     await toggleWishlist(product._id);
   };
 
@@ -150,8 +163,8 @@ export default function ProductDetail() {
             Product Not Found
           </h1>
           <p className="text-gray-600 text-base">
-            Sorry, the product you&apos;re looking for is unavailable or may have
-            been removed.
+            Sorry, the product you&apos;re looking for is unavailable or may
+            have been removed.
           </p>
         </div>
         <div className="space-y-3">
@@ -175,7 +188,10 @@ export default function ProductDetail() {
         <nav className="mb-6">
           <ol className="flex items-center space-x-2 text-sm text-gray-600">
             <li>
-              <Link href="/" className="hover:text-orange-500 transition-colors">
+              <Link
+                href="/"
+                className="hover:text-orange-500 transition-colors"
+              >
                 Home
               </Link>
             </li>
@@ -204,7 +220,7 @@ export default function ProductDetail() {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 bg-white rounded-lg shadow-sm p-6 lg:p-8">
-         
+          {/* Image Section */}
           <div className="space-y-4">
             <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
               {activeImage && (
@@ -262,7 +278,7 @@ export default function ProductDetail() {
             )}
           </div>
 
-        
+          {/* Product Info Section */}
           <div className="space-y-6">
             <div>
               <p className="text-sm text-orange-500 font-semibold uppercase tracking-wider mb-2">

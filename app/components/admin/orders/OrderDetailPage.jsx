@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
-import { ArrowLeft, Printer, ChevronDown, Package, User, MapPin, CreditCard, Calendar, DollarSign, Phone, Mail, FileText, } from "lucide-react";
+import { ArrowLeft, Printer, Package, User, MapPin, CreditCard, DollarSign, Phone, Mail, FileText, } from "lucide-react";
 import Image from "next/image";
 import toast from "react-hot-toast";
 
@@ -12,7 +12,6 @@ export default function ViewOrderPage() {
   const { token, isAuthenticated, isAdmin } = useAuth();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   const getAuthHeaders = () => ({
     "Content-Type": "application/json",
@@ -47,34 +46,6 @@ export default function ViewOrderPage() {
       router.push("/admin/orders");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleUpdateStatus = async (newStatus) => {
-    setUpdatingStatus(true);
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/orders/${id}/status`,
-        {
-          method: "PUT",
-          headers: getAuthHeaders(),
-          body: JSON.stringify({ status: newStatus }),
-        }
-      );
-
-      const data = await res.json();
-
-      if (data.success) {
-        toast.success("Order status updated");
-        setOrder((prev) => ({ ...prev, status: newStatus }));
-      } else {
-        toast.error(data.message || "Failed to update status");
-      }
-    } catch (error) {
-      console.error("Error updating status:", error);
-      toast.error("Failed to update status");
-    } finally {
-      setUpdatingStatus(false);
     }
   };
 
@@ -206,26 +177,6 @@ export default function ViewOrderPage() {
     });
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      delivered: "bg-emerald-500 text-white",
-      pending: "bg-orange-500 text-white",
-      cancelled: "bg-red-500 text-white",
-      processing: "bg-blue-500 text-white",
-      shipped: "bg-purple-500 text-white",
-    };
-    return colors[status?.toLowerCase()] || "bg-gray-500 text-white";
-  };
-
-  const getPaymentStatusColor = (status) => {
-    const colors = {
-      paid: "bg-emerald-100 text-emerald-800",
-      pending: "bg-orange-100 text-orange-800",
-      failed: "bg-red-100 text-red-800",
-      refunded: "bg-gray-100 text-gray-800",
-    };
-    return colors[status?.toLowerCase()] || "bg-gray-100 text-gray-800";
-  };
 
   if (loading) {
     return (
@@ -246,7 +197,6 @@ export default function ViewOrderPage() {
 
   return (
     <div className="p-6 bg-[#f7f7f5] min-h-screen">
-      {/* Header */}
       <div className="mb-6">
         <button
           onClick={() => router.push("/admin/orders")}
@@ -264,18 +214,7 @@ export default function ViewOrderPage() {
             <p className="text-gray-500 mt-1">
               Placed on {formatDate(order.createdAt)}
             </p>
-            <div className="flex items-center gap-3 mt-3">
-              <span
-                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold capitalize ${getStatusColor(order.status)}`}
-              >
-                {order.status}
-              </span>
-              <span
-                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold capitalize ${getPaymentStatusColor(order.paymentStatus)}`}
-              >
-                Payment: {order.paymentStatus}
-              </span>
-            </div>
+      
           </div>
 
           <button
@@ -285,34 +224,6 @@ export default function ViewOrderPage() {
             <Printer size={18} />
             Print Invoice
           </button>
-        </div>
-      </div>
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Update Order Status
-        </h2>
-        <div className="flex items-center gap-4">
-          <div className="relative flex-1 max-w-xs">
-            <select
-              value={order.status}
-              onChange={(e) => handleUpdateStatus(e.target.value)}
-              disabled={updatingStatus}
-              className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none bg-white cursor-pointer disabled:opacity-50"
-            >
-              <option value="pending">Pending</option>
-              <option value="processing">Processing</option>
-              <option value="shipped">Shipped</option>
-              <option value="delivered">Delivered</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-          </div>
-          {updatingStatus && (
-            <div className="flex items-center gap-2 text-gray-600">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-600"></div>
-              <span className="text-sm">Updating...</span>
-            </div>
-          )}
         </div>
       </div>
 
@@ -392,14 +303,7 @@ export default function ViewOrderPage() {
                   {order.paymentMethod}
                 </span>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-600">Status</span>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getPaymentStatusColor(order.paymentStatus)}`}
-                >
-                  {order.paymentStatus}
-                </span>
-              </div>
+        
               <div className="flex justify-between items-center py-2">
                 <span className="text-sm text-gray-600">Date</span>
                 <span className="text-sm font-medium text-gray-900">
@@ -500,89 +404,7 @@ export default function ViewOrderPage() {
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-            <div className="flex items-center gap-2 mb-6">
-              <Calendar className="text-emerald-600" size={20} />
-              <h2 className="text-lg font-semibold text-gray-900">
-                Order Timeline
-              </h2>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex gap-4">
-                <div className="flex flex-col items-center">
-                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                    <Package size={16} className="text-emerald-600" />
-                  </div>
-                  <div className="w-0.5 h-full bg-gray-200 mt-2"></div>
-                </div>
-                <div className="pb-8">
-                  <p className="font-medium text-gray-900">Order Placed</p>
-                  <p className="text-sm text-gray-500">
-                    {formatDate(order.createdAt)}
-                  </p>
-                </div>
-              </div>
-
-              {order.status !== "pending" && (
-                <div className="flex gap-4">
-                  <div className="flex flex-col items-center">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                      <Package size={16} className="text-blue-600" />
-                    </div>
-                    {order.status !== "processing" && (
-                      <div className="w-0.5 h-full bg-gray-200 mt-2"></div>
-                    )}
-                  </div>
-                  <div className="pb-8">
-                    <p className="font-medium text-gray-900">Processing</p>
-                    <p className="text-sm text-gray-500">Status updated</p>
-                  </div>
-                </div>
-              )}
-
-              {(order.status === "shipped" || order.status === "delivered") && (
-                <div className="flex gap-4">
-                  <div className="flex flex-col items-center">
-                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                      <Package size={16} className="text-purple-600" />
-                    </div>
-                    {order.status !== "shipped" && (
-                      <div className="w-0.5 h-full bg-gray-200 mt-2"></div>
-                    )}
-                  </div>
-                  <div className="pb-8">
-                    <p className="font-medium text-gray-900">Shipped</p>
-                    <p className="text-sm text-gray-500">Order dispatched</p>
-                  </div>
-                </div>
-              )}
-
-              {order.status === "delivered" && (
-                <div className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
-                    <Package size={16} className="text-white" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Delivered</p>
-                    <p className="text-sm text-gray-500">Order completed</p>
-                  </div>
-                </div>
-              )}
-
-              {order.status === "cancelled" && (
-                <div className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
-                    <Package size={16} className="text-red-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Cancelled</p>
-                    <p className="text-sm text-gray-500">Order was cancelled</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+        
         </div>
       </div>
     </div>

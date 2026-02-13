@@ -4,18 +4,9 @@ import { useAuth } from "@/app/context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  LayoutDashboard,
-  Package,
-  FolderTree,
-  ShoppingBag,
-  Users,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-} from "lucide-react";
+import { LayoutDashboard, Package, FolderTree, ShoppingBag, Users, Settings, LogOut, Menu, X, } from "lucide-react";
 import { Toaster } from 'react-hot-toast';
+import toast from "react-hot-toast";
 
 export default function AdminLayout({ children }) {
   const router = useRouter();
@@ -79,9 +70,43 @@ export default function AdminLayout({ children }) {
   }
 
   const handleLogout = () => {
-    logout();
-    router.push("/admin/login");
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-3 text-center">
+          <p className="text-sm font-semibold">
+            Are you sure you want to logout?
+          </p>
+
+          <div className="flex justify-center gap-3">
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                logout();
+
+                setTimeout(() => {
+                  router.push("/admin/login");
+                }, 800);
+              }}
+              className="px-4 py-1 text-sm bg-red-600 text-white rounded"
+            >
+              Yes, Logout
+            </button>
+
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-4 py-1 text-sm bg-gray-200 text-black rounded"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ),
+        {
+      duration: Infinity,
+    }
+    );
   };
+
 
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/admin/dashboard" },
@@ -102,9 +127,8 @@ export default function AdminLayout({ children }) {
       </button>
 
       <aside
-        className={`fixed top-0 left-0 z-40 w-64 h-screen transition-transform ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0 bg-gray-900 text-white`}
+        className={`fixed top-0 left-0 z-40 w-64 h-screen transition-transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } lg:translate-x-0 bg-gray-800 text-white`}
       >
         <div className="h-full px-3 py-4 overflow-y-auto">
           <div className="mb-8 px-4 py-6 border-b border-gray-700">
@@ -124,11 +148,10 @@ export default function AdminLayout({ children }) {
                   <Link
                     href={item.href}
                     onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      isActive
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
                         ? "bg-indigo-600 text-white"
                         : "text-gray-300 hover:bg-gray-800"
-                    }`}
+                      }`}
                   >
                     <Icon size={20} />
                     <span>{item.label}</span>
@@ -187,48 +210,49 @@ export default function AdminLayout({ children }) {
 
         <main className="p-0">
           {children}
-   <Toaster
-  position="top-center"
-  reverseOrder={false}
-  toastOptions={{
-    duration: 3500,
-    style: {
-      background: "rgba(15, 23, 42, 0.95)", 
-      color: "#f8fafc",
-      padding: "12px 16px",
-      borderRadius: "12px",
-      fontSize: "14px",
-      fontWeight: 500,
-      boxShadow:
-        "0 10px 25px rgba(0,0,0,0.25), 0 4px 10px rgba(0,0,0,0.15)",
-      backdropFilter: "blur(8px)",
-    },
+          <Toaster
+          position="top-center"
+          
+            reverseOrder={false}
+            toastOptions={{
+              duration: 3500,
+              style: {
+                background: "rgba(15, 23, 42, 0.95)",
+                color: "#f8fafc",
+                padding: "16px 20px",
+                borderRadius: "12px",
+                fontSize: "14px",
+                fontWeight: 500,
+                boxShadow:
+                  "0 10px 25px rgba(0,0,0,0.25), 0 4px 10px rgba(0,0,0,0.15)",
+                backdropFilter: "blur(8px)",
+              },
 
-    success: {
-      iconTheme: {
-        primary: "#22c55e",
-        secondary: "#f8fafc",
-      },
-    },
+              success: {
+                iconTheme: {
+                  primary: "#22c55e",
+                  secondary: "#f8fafc",
+                },
+              },
 
-    error: {
-      duration: 4500,
-      iconTheme: {
-        primary: "#ef4444", 
-        secondary: "#f8fafc",
-      },
-    },
+              error: {
+                duration: 4500,
+                iconTheme: {
+                  primary: "#ef4444",
+                  secondary: "#f8fafc",
+                },
+              },
 
-    loading: {
-      iconTheme: {
-        primary: "#38bdf8", 
-        secondary: "#0f172a",
-      },
-    },
-  }}
-/>
+              loading: {
+                iconTheme: {
+                  primary: "#38bdf8",
+                  secondary: "#0f172a",
+                },
+              },
+            }}
+          />
 
-          </main>
+        </main>
       </div>
 
       {sidebarOpen && (

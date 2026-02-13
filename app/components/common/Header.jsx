@@ -9,6 +9,7 @@ import { useShop } from "@/app/context/ShopContext";
 import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { memo } from "react";
+import toast from "react-hot-toast";
 
 function Header() {
   const router = useRouter();
@@ -16,8 +17,45 @@ function Header() {
   const { user, isAuthenticated, logout } = useAuth();
 
   const handleLogout = () => {
-    logout();
-    router.push("/");
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-3 text-center">
+          <p className="text-sm font-semibold">
+            Are you sure you want to logout?
+          </p>
+  
+          <div className="flex justify-center gap-3">
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                toast.success("Logged out successfully");
+  
+                logout();
+  
+                setTimeout(() => {
+                  router.push("/");
+                }, 800);
+              }}
+              className="px-4 py-1 text-sm bg-red-600 text-white rounded"
+            >
+              Yes, Logout
+            </button>
+  
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-4 py-1 text-sm bg-gray-200 text-black rounded"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ),
+      
+         {
+      duration: Infinity,
+      position: "top-center",
+    }
+    );
   };
 
   const cartCount = cart?.totalItems || 0;
@@ -51,7 +89,7 @@ function Header() {
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2 hover:text-primary font-serif text-[17px] transition-colors"
+                  className="flex items-center gap-2 hover:text-primary font-serif text-[17px] transition-colors cursor-pointer"
                 >
                   <LogOut size={20} />
                   Logout
@@ -61,7 +99,7 @@ function Header() {
               <div className="flex items-center gap-3">
                 <Link
                   href={"/login"}
-                  className="hover:text-primary font-serif text-[18px] transition-colors"
+                  className="hover:text-primary font-serif text-[18px] transition-colors cursor-pointer"
                 >
                   Login
                 </Link>
@@ -69,7 +107,7 @@ function Header() {
                 <span>|</span>
                 <Link
                   href={"/register"}
-                  className="hover:text-primary font-serif text-[18px] transition-colors"
+                  className="hover:text-primary font-serif text-[18px] transition-colors cursor-pointer"
                 >
                   Register
                 </Link>

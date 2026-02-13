@@ -134,14 +134,13 @@ export default function WishlistPage() {
           </button>
         </div>
 
-        {/* Wishlist Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {wishlist.products.map((product) => (
             <div
               key={product._id}
               className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition group"
             >
-              {/* Product Image */}
+
               <Link href={`/product/${product.slug}`} className="block relative">
                 <div className="relative aspect-square overflow-hidden bg-gray-100">
                   <Image
@@ -151,7 +150,6 @@ export default function WishlistPage() {
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   
-                  {/* Remove Button - Overlay */}
                   <button
                     onClick={(e) => {
                       e.preventDefault();
@@ -163,7 +161,6 @@ export default function WishlistPage() {
                     <Trash2 size={18} className="text-red-500" />
                   </button>
 
-                  {/* Stock Badge */}
                   {product.quantity === 0 && (
                     <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
                       Out of Stock
@@ -178,7 +175,6 @@ export default function WishlistPage() {
                 </div>
               </Link>
 
-              {/* Product Info */}
               <div className="p-4">
                 <Link href={`/product/${product.slug}`}>
                   <p className="text-sm text-gray-500 capitalize mb-1">{product.category}</p>
@@ -187,7 +183,6 @@ export default function WishlistPage() {
                   </h3>
                 </Link>
 
-                {/* Price */}
                 <div className="mb-4">
                   <span className="text-xl font-bold text-orange-500">
                     ${product.salePrice.toFixed(2)}
@@ -199,7 +194,6 @@ export default function WishlistPage() {
                   )}
                 </div>
 
-                {/* Add to Cart Button */}
                 <button
                   onClick={() => handleAddToCart(product)}
                   disabled={product.quantity === 0 || loading[product._id]}
