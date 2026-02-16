@@ -8,10 +8,11 @@ export default function Home() {
   return (
     <>
       <Category />
-      <ProductList />
-      <ProductSlider />
-      <ProductList2 />   
+      <ProductList category="Haircare, Skincare, Crystals"/>
+      <ProductSlider category="Pyrite"/>
+      <ProductList2  category="Pyrite Decor, Crystals"/>   
       <Features />
     </>
   );
 }
+

@@ -8,7 +8,7 @@ const Category = () => {
     <section>
       <div className="py-2 px-4 sm:px-6">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 sm:gap-6 gap-4">
-          <Link href="/category/skin-care">
+          <Link href="/types/skin-care">
             <div className="p-3 rounded-lg overflow-hidden cursor-pointer relative">
               <div className="rounded-full overflow-hidden mx-auto">
                 <Image
@@ -25,7 +25,7 @@ const Category = () => {
             </div>
           </Link>
 
-          <Link href="/category/hair-care">
+          <Link href="/types/hair-care">
             <div className="p-3 rounded-lg overflow-hidden cursor-pointer relative">
               <div className="rounded-full overflow-hidden mx-auto">
                 <Image
@@ -42,7 +42,7 @@ const Category = () => {
             </div>
           </Link>
 
-          <Link href="/category/fragrance">
+          <Link href="/types/fragrance">
             <div className="p-3 rounded-lg overflow-hidden cursor-pointer relative">
               <div className="rounded-full overflow-hidden mx-auto">
                 <Image
@@ -59,7 +59,7 @@ const Category = () => {
             </div>
           </Link>
 
-          <Link href="/category/combos">
+          <Link href="/types/combos">
             <div className="p-3 rounded-lg overflow-hidden cursor-pointer relative">
               <div className="rounded-full overflow-hidden mx-auto">
                 <Image
@@ -78,7 +78,7 @@ const Category = () => {
             </div>
           </Link>
 
-          <Link href="/category/crystals">
+          <Link href="/types/crystals">
             <div className="p-3 rounded-lg overflow-hidden cursor-pointer relative">
               <div className="rounded-full overflow-hidden mx-auto">
                 <Image

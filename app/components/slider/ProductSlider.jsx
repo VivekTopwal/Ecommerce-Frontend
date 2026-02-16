@@ -26,7 +26,9 @@ const formatPrice = (price) => {
   });
 };
 
-const ProductSlider = () => {
+
+
+const ProductSlider = ({ category = null, limit = 10 }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [addingToCart, setAddingToCart] = useState(null);
@@ -34,7 +36,9 @@ const ProductSlider = () => {
   const { addToCart, toggleWishlist, isInWishlist } = useShop();
   const { token, isAuthenticated } = useAuth();
   const router = useRouter();
-
+const handleClick = () => {
+   router.push("/shop");
+}
   const getAuthHeaders = () => {
     return {
       "Content-Type": "application/json",
@@ -51,8 +55,24 @@ const ProductSlider = () => {
           cache: "no-store",
         });
         const data = await res.json();
-        // Get first 10 products for the slider (or all if less than 10)
-        setProducts((data.products || data).slice(0, 10));
+        let allProducts = data.products || data;
+
+          if (category) {
+          const categories = typeof category === 'string' 
+            ? category.split(',').map(cat => cat.trim()) 
+            : category;
+          
+          allProducts = allProducts.filter(p => 
+            categories.includes(p.category)
+          );
+        }
+
+          if (limit) {
+          allProducts = allProducts.slice(0, limit);
+        }
+
+         setProducts(allProducts);
+
       } catch (error) {
         console.error("Failed to fetch products", error);
         toast.error("Failed to load products");
@@ -62,7 +82,7 @@ const ProductSlider = () => {
     };
 
     fetchProducts();
-  }, [token, isAuthenticated]);
+  }, [token, isAuthenticated, limit, category]);
 
   const handleAddToCart = async (e, productId) => {
     e.preventDefault();
@@ -190,7 +210,7 @@ const ProductSlider = () => {
 
               return (
                 <SwiperSlide key={product._id}>
-                  <Link href={`/product/${product._id}`}>
+                  <Link href={`/product/${product.slug}`}>
                     <div className="bg-white overflow-hidden shadow-sm rounded">
                       <div className="relative">
                         {product.mainImage ? (
@@ -295,7 +315,7 @@ const ProductSlider = () => {
                   </Link>
                 </div>
 
-                <button
+                <button onClick={handleClick}
                   aria-label="Next"
                   className="absolute bottom-6 left-6 z-20 w-12 h-12 rounded-full border border-gray-500 flex items-center justify-center text-white hover:bg-white hover:text-black transition cursor-pointer"
                 >

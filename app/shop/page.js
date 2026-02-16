@@ -1,15 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
-import { Heart, ChevronRight } from "lucide-react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import { Heart, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Shippori_Mincho } from "next/font/google";
 import { useShop } from "@/app/context/ShopContext";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuth } from "@/app/context/AuthContext";
-
 
 const mincho = Shippori_Mincho({
   subsets: ["latin"],
@@ -23,18 +22,22 @@ const formatPrice = (price) => {
   });
 };
 
-
-
-const ProductCard = ({ category = null, limit = 11 }) => {
-  const [products, setProducts] = useState([]);
+const ProductCard = ({ itemsPerPage = 12 }) => {
+  const [allProducts, setAllProducts] = useState([]);
+  const [displayedProducts, setDisplayedProducts] = useState([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [addingToCart, setAddingToCart] = useState(null);
   const [buyingNow, setBuyingNow] = useState(null);
+  
   const { addToCart, toggleWishlist, isInWishlist } = useShop();
   const router = useRouter();
-  const handleClick = () => {
-   router.push("/shop");
-}
   const { token, isAuthenticated } = useAuth();
+  
+  const observerTarget = useRef(null);
+
   const getAuthHeaders = () => {
     return {
       "Content-Type": "application/json",
@@ -45,54 +48,87 @@ const ProductCard = ({ category = null, limit = 11 }) => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`,
-            {
-        headers: getAuthHeaders(),
+        setLoading(true);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
+          headers: getAuthHeaders(),
           cache: "no-store",
-        }
-        );
-        
+        });
+
         const data = await res.json();
-          let allProducts = data.products || data;
-
-       if (category) {
-          const categories = typeof category === 'string' 
-            ? category.split(',').map(cat => cat.trim()) 
-            : category;
-          
-          allProducts = allProducts.filter(p => 
-            categories.includes(p.category)
-          );
-        }
-        if (limit) {
-          allProducts = allProducts.slice(0, limit);
-        }
-
-        setProducts(allProducts);
-       
+        const products = data.products || data;
+        
+        setAllProducts(products);
+        
+        const firstPage = products.slice(0, itemsPerPage);
+        setDisplayedProducts(firstPage);
+        setHasMore(products.length > itemsPerPage);
+        
       } catch (error) {
         console.error("Failed to fetch products", error);
         toast.error("Failed to load products");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchProducts();
-  }, [token, isAuthenticated, limit, category]);
+  }, [token, isAuthenticated, itemsPerPage]);
+
+  const loadMoreProducts = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    
+    setTimeout(() => {
+      const startIndex = page * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const newProducts = allProducts.slice(startIndex, endIndex);
+      
+      if (newProducts.length > 0) {
+        setDisplayedProducts(prev => [...prev, ...newProducts]);
+        setPage(prev => prev + 1);
+        setHasMore(endIndex < allProducts.length);
+      } else {
+        setHasMore(false);
+      }
+      
+      setLoadingMore(false);
+    }, 500); 
+  }, [page, itemsPerPage, allProducts, loadingMore, hasMore]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          loadMoreProducts();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [loadMoreProducts, hasMore, loadingMore]);
 
   const handleAddToCart = async (e, productId) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    if (addingToCart || buyingNow) return; 
-    
+
+    if (addingToCart || buyingNow) return;
+
     setAddingToCart(productId);
-    
+
     try {
       const result = await addToCart(productId, 1);
-      
-      if (result.success) {
-     
-      } else {
+
+      if (!result.success) {
         toast.error(result.message || "Failed to add to cart");
       }
     } catch (error) {
@@ -106,15 +142,14 @@ const ProductCard = ({ category = null, limit = 11 }) => {
   const handleBuyNow = async (e, productId) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    if (addingToCart || buyingNow) return;
-    
-    setBuyingNow(productId);
-    
-    try {
 
+    if (addingToCart || buyingNow) return;
+
+    setBuyingNow(productId);
+
+    try {
       const result = await addToCart(productId, 1, true);
-      
+
       if (result.success) {
         router.push("/checkout");
       } else {
@@ -131,7 +166,7 @@ const ProductCard = ({ category = null, limit = 11 }) => {
   const handleToggleWishlist = async (e, productId) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     try {
       const result = await toggleWishlist(productId);
       if (!result.success) {
@@ -143,19 +178,33 @@ const ProductCard = ({ category = null, limit = 11 }) => {
     }
   };
 
+  if (loading) {
+    return (
+      <section className="py-10">
+        <div className="container mx-auto px-4">
+          <div className="text-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto text-orange-400" />
+            <p className="mt-4 text-gray-600">Loading products...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-10">
       <div className="container mx-auto px-4">
-         <h2 className={`text-center text-[30px] mb-8 ${mincho.className}`}>
-          Pyrite Decor
+        <h2 className={`text-center text-[30px] mb-8 ${mincho.className}`}>
+          All Collections
         </h2>
+        
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products.map((p) => {
+          {displayedProducts.map((p) => {
             const isWishlisted = isInWishlist(p._id);
             const isAddingToCart = addingToCart === p._id;
             const isBuyingNow = buyingNow === p._id;
             const isAnyLoading = isAddingToCart || isBuyingNow;
-            
+
             return (
               <div
                 key={p._id}
@@ -191,7 +240,7 @@ const ProductCard = ({ category = null, limit = 11 }) => {
                       <span className="absolute top-3 left-3 bg-pink-600 text-white text-xs px-2 py-1 rounded">
                         {Math.round(
                           ((p.productPrice - p.salePrice) / p.productPrice) *
-                            100,
+                            100
                         )}
                         % off
                       </span>
@@ -240,7 +289,11 @@ const ProductCard = ({ category = null, limit = 11 }) => {
                     disabled={isAnyLoading || p.quantity === 0}
                     className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
-                    {isAddingToCart ? "Adding..." : p.quantity === 0 ? "Out of Stock" : "Add to Cart"}
+                    {isAddingToCart
+                      ? "Adding..."
+                      : p.quantity === 0
+                        ? "Out of Stock"
+                        : "Add to Cart"}
                   </button>
 
                   <button
@@ -254,28 +307,24 @@ const ProductCard = ({ category = null, limit = 11 }) => {
               </div>
             );
           })}
+        </div>
 
-              <div className="relative h-[98%] rounded-md bg-gradient-to-b from-[#2a2a2a] to-[#1b1b1b] overflow-hidden px-8 py-10">
-            <div className="z-10 relative">
-              <h2 className="text-white text-3xl md:text-4xl font-serif leading-tight">
-               Pyrite Decor
-              </h2>
-
-              <Link
-                href="/shop"
-                className="inline-block mt-3 text-sm text-white underline underline-offset-4 hover:opacity-80 transition"
-              >
-                Shop all
-              </Link>
+        <div ref={observerTarget} className="w-full py-8">
+          {loadingMore && (
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto text-orange-400" />
+              <p className="mt-4 text-gray-600">Loading more products...</p>
             </div>
-
-            <button onClick={handleClick}
-              aria-label="Next"
-              className="absolute bottom-6 left-6 w-12 h-12 rounded-full border border-gray-500 flex items-center justify-center text-white hover:bg-white hover:text-black transition cursor-pointer"
-            >
-              <ChevronRight />
-            </button>
-          </div>
+          )}
+          
+          {!hasMore && displayedProducts.length > 0 && (
+            <div className="text-center text-gray-500">
+              <p>You&apos;ve reached the end!</p>
+              <p className="text-sm mt-2">
+                Showing all {displayedProducts.length} products
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </section>

@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuth } from "@/app/context/AuthContext";
 
-
 const mincho = Shippori_Mincho({
   subsets: ["latin"],
   weight: ["400", "600"],
@@ -25,15 +24,13 @@ const formatPrice = (price) => {
 
 
 
-const ProductCard = ({ category = null, limit = 11 }) => {
+const ProductCard = ({ category = "Fragrance", limit = 12 }) => {
   const [products, setProducts] = useState([]);
   const [addingToCart, setAddingToCart] = useState(null);
   const [buyingNow, setBuyingNow] = useState(null);
   const { addToCart, toggleWishlist, isInWishlist } = useShop();
   const router = useRouter();
-  const handleClick = () => {
-   router.push("/shop");
-}
+
   const { token, isAuthenticated } = useAuth();
   const getAuthHeaders = () => {
     return {
@@ -45,15 +42,13 @@ const ProductCard = ({ category = null, limit = 11 }) => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`,
-            {
-        headers: getAuthHeaders(),
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
+          headers: getAuthHeaders(),
           cache: "no-store",
-        }
-        );
-        
+        });
+
         const data = await res.json();
-          let allProducts = data.products || data;
+        let allProducts = data.products || data;
 
        if (category) {
           const categories = typeof category === 'string' 
@@ -82,16 +77,15 @@ const ProductCard = ({ category = null, limit = 11 }) => {
   const handleAddToCart = async (e, productId) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    if (addingToCart || buyingNow) return; 
-    
+
+    if (addingToCart || buyingNow) return;
+
     setAddingToCart(productId);
-    
+
     try {
       const result = await addToCart(productId, 1);
-      
+
       if (result.success) {
-     
       } else {
         toast.error(result.message || "Failed to add to cart");
       }
@@ -106,15 +100,14 @@ const ProductCard = ({ category = null, limit = 11 }) => {
   const handleBuyNow = async (e, productId) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    if (addingToCart || buyingNow) return;
-    
-    setBuyingNow(productId);
-    
-    try {
 
+    if (addingToCart || buyingNow) return;
+
+    setBuyingNow(productId);
+
+    try {
       const result = await addToCart(productId, 1, true);
-      
+
       if (result.success) {
         router.push("/checkout");
       } else {
@@ -131,7 +124,7 @@ const ProductCard = ({ category = null, limit = 11 }) => {
   const handleToggleWishlist = async (e, productId) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     try {
       const result = await toggleWishlist(productId);
       if (!result.success) {
@@ -146,8 +139,8 @@ const ProductCard = ({ category = null, limit = 11 }) => {
   return (
     <section className="py-10">
       <div className="container mx-auto px-4">
-         <h2 className={`text-center text-[30px] mb-8 ${mincho.className}`}>
-          Pyrite Decor
+          <h2 className={`text-center text-[30px] mb-8 ${mincho.className}`}>
+          Fragrance Products
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {products.map((p) => {
@@ -155,7 +148,7 @@ const ProductCard = ({ category = null, limit = 11 }) => {
             const isAddingToCart = addingToCart === p._id;
             const isBuyingNow = buyingNow === p._id;
             const isAnyLoading = isAddingToCart || isBuyingNow;
-            
+
             return (
               <div
                 key={p._id}
@@ -240,7 +233,11 @@ const ProductCard = ({ category = null, limit = 11 }) => {
                     disabled={isAnyLoading || p.quantity === 0}
                     className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
-                    {isAddingToCart ? "Adding..." : p.quantity === 0 ? "Out of Stock" : "Add to Cart"}
+                    {isAddingToCart
+                      ? "Adding..."
+                      : p.quantity === 0
+                        ? "Out of Stock"
+                        : "Add to Cart"}
                   </button>
 
                   <button
@@ -255,27 +252,7 @@ const ProductCard = ({ category = null, limit = 11 }) => {
             );
           })}
 
-              <div className="relative h-[98%] rounded-md bg-gradient-to-b from-[#2a2a2a] to-[#1b1b1b] overflow-hidden px-8 py-10">
-            <div className="z-10 relative">
-              <h2 className="text-white text-3xl md:text-4xl font-serif leading-tight">
-               Pyrite Decor
-              </h2>
-
-              <Link
-                href="/shop"
-                className="inline-block mt-3 text-sm text-white underline underline-offset-4 hover:opacity-80 transition"
-              >
-                Shop all
-              </Link>
-            </div>
-
-            <button onClick={handleClick}
-              aria-label="Next"
-              className="absolute bottom-6 left-6 w-12 h-12 rounded-full border border-gray-500 flex items-center justify-center text-white hover:bg-white hover:text-black transition cursor-pointer"
-            >
-              <ChevronRight />
-            </button>
-          </div>
+       
         </div>
       </div>
     </section>

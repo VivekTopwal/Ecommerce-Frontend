@@ -36,7 +36,6 @@ export default function ProductDetail() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        // Use PUBLIC route - no auth needed for viewing products
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/products/${slug}`
         );

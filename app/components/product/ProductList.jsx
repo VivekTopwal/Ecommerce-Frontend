@@ -22,12 +22,17 @@ const formatPrice = (price) => {
   });
 };
 
-const ProductCard = () => {
+
+
+const ProductCard = ({ category = null, limit = 11 }) => {
   const [products, setProducts] = useState([]);
   const [addingToCart, setAddingToCart] = useState(null);
   const [buyingNow, setBuyingNow] = useState(null);
   const { addToCart, toggleWishlist, isInWishlist } = useShop();
   const router = useRouter();
+  const handleClick = () => {
+   router.push("/shop");
+}
   const { token, isAuthenticated } = useAuth();
   const getAuthHeaders = () => {
     return {
@@ -39,37 +44,50 @@ const ProductCard = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`,
-            {
-        headers: getAuthHeaders(),
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
+          headers: getAuthHeaders(),
           cache: "no-store",
-        }
-        );
-        
+        });
+
         const data = await res.json();
-        setProducts(data.products || data);
-        console.log("Fetched products:", data);
+        let allProducts = data.products || data;
+
+       if (category) {
+          const categories = typeof category === 'string' 
+            ? category.split(',').map(cat => cat.trim()) 
+            : category;
+          
+          allProducts = allProducts.filter(p => 
+            categories.includes(p.category)
+          );
+        }
+        if (limit) {
+          allProducts = allProducts.slice(0, limit);
+        }
+
+        setProducts(allProducts);
+       
       } catch (error) {
         console.error("Failed to fetch products", error);
+        toast.error("Failed to load products");
       }
     };
 
     fetchProducts();
-  }, [token, isAuthenticated]);
+  }, [token, isAuthenticated, limit, category]);
 
   const handleAddToCart = async (e, productId) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    if (addingToCart || buyingNow) return; 
-    
+
+    if (addingToCart || buyingNow) return;
+
     setAddingToCart(productId);
-    
+
     try {
       const result = await addToCart(productId, 1);
-      
+
       if (result.success) {
-     
       } else {
         toast.error(result.message || "Failed to add to cart");
       }
@@ -84,15 +102,14 @@ const ProductCard = () => {
   const handleBuyNow = async (e, productId) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    if (addingToCart || buyingNow) return;
-    
-    setBuyingNow(productId);
-    
-    try {
 
+    if (addingToCart || buyingNow) return;
+
+    setBuyingNow(productId);
+
+    try {
       const result = await addToCart(productId, 1, true);
-      
+
       if (result.success) {
         router.push("/checkout");
       } else {
@@ -109,7 +126,7 @@ const ProductCard = () => {
   const handleToggleWishlist = async (e, productId) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     try {
       const result = await toggleWishlist(productId);
       if (!result.success) {
@@ -130,7 +147,7 @@ const ProductCard = () => {
             const isAddingToCart = addingToCart === p._id;
             const isBuyingNow = buyingNow === p._id;
             const isAnyLoading = isAddingToCart || isBuyingNow;
-            
+
             return (
               <div
                 key={p._id}
@@ -215,7 +232,11 @@ const ProductCard = () => {
                     disabled={isAnyLoading || p.quantity === 0}
                     className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
-                    {isAddingToCart ? "Adding..." : p.quantity === 0 ? "Out of Stock" : "Add to Cart"}
+                    {isAddingToCart
+                      ? "Adding..."
+                      : p.quantity === 0
+                        ? "Out of Stock"
+                        : "Add to Cart"}
                   </button>
 
                   <button
@@ -230,7 +251,7 @@ const ProductCard = () => {
             );
           })}
 
-              <div className="relative h-[98%] rounded-md bg-gradient-to-b from-[#2a2a2a] to-[#1b1b1b] overflow-hidden px-8 py-10">
+          <div className="relative h-[98%] rounded-md bg-gradient-to-b from-[#2a2a2a] to-[#1b1b1b] overflow-hidden px-8 py-10">
             <div className="z-10 relative">
               <h2 className="text-white text-3xl md:text-4xl font-serif leading-tight">
                 Mindful Living <br /> Best Seller
@@ -244,7 +265,7 @@ const ProductCard = () => {
               </Link>
             </div>
 
-            <button
+            <button onClick={handleClick}
               aria-label="Next"
               className="absolute bottom-6 left-6 w-12 h-12 rounded-full border border-gray-500 flex items-center justify-center text-white hover:bg-white hover:text-black transition cursor-pointer"
             >

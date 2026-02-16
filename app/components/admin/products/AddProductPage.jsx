@@ -381,6 +381,8 @@ const AddProductPage = () => {
                 <option value="Haircare">Haircare</option>
                 <option value="Skincare">Skincare</option>
                 <option value="Crystals">Crystals</option>
+                <option value="Pyrite">Pyrite</option>
+                <option value="Pyrite Decor">Pyrite Decor</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
             </div>
