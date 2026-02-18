@@ -30,126 +30,110 @@ const formatPrice = (price) => {
 
 const ProductSlider = ({ category = null, limit = 10 }) => {
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [addingToCart, setAddingToCart] = useState(null);
   const [buyingNow, setBuyingNow] = useState(null);
   const { addToCart, toggleWishlist, isInWishlist } = useShop();
-  const { token, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const router = useRouter();
 const handleClick = () => {
    router.push("/shop");
 }
-  const getAuthHeaders = () => {
-    return {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    };
-  };
-
-  useEffect(() => {
+ 
+    useEffect(() => {
     const fetchProducts = async () => {
       try {
-        setLoading(true);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
-          headers: getAuthHeaders(),
-          cache: "no-store",
-        });
-        const data = await res.json();
-        let allProducts = data.products || data;
-
-          if (category) {
-          const categories = typeof category === 'string' 
-            ? category.split(',').map(cat => cat.trim()) 
+        const params = new URLSearchParams();
+        if (category) {
+          const categoryValue = Array.isArray(category)
+            ? category.join(",")
             : category;
-          
-          allProducts = allProducts.filter(p => 
-            categories.includes(p.category)
-          );
+          params.append("category", categoryValue);
         }
-
-          if (limit) {
-          allProducts = allProducts.slice(0, limit);
+        if (limit) {
+          params.append("limit", limit);
         }
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/products?${params.toString()}`,
+          { cache: "no-store" }
+        );
 
-         setProducts(allProducts);
-
+        const data = await res.json();
+       setProducts(data.products ?? data);
       } catch (error) {
         console.error("Failed to fetch products", error);
         toast.error("Failed to load products");
-      } finally {
-        setLoading(false);
-      }
+      } 
     };
 
     fetchProducts();
-  }, [token, isAuthenticated, limit, category]);
+  }, [category, limit]); 
 
-  const handleAddToCart = async (e, productId) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (addingToCart || buyingNow) return;
 
-    setAddingToCart(productId);
-    try {
-      const result = await addToCart(productId, 1);
-      if (!result.success) {
-        toast.error(result.message || "Failed to add to cart");
-      }
-    } catch (error) {
-      console.error("Add to cart error:", error);
-      toast.error("Failed to add to cart");
-    } finally {
-      setAddingToCart(null);
-    }
-  };
+const handleAddToCart = async (e, productId) => {
+  e.preventDefault();
+  e.stopPropagation();
+  if (addingToCart || buyingNow) return;
 
-  const handleBuyNow = async (e, productId) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (addingToCart || buyingNow) return;
+  setAddingToCart(productId);
+  await addToCart(productId, 1);
+  setAddingToCart(null);
+};
 
-    setBuyingNow(productId);
-    try {
-      const result = await addToCart(productId, 1, true);
-      if (result.success) {
-        router.push("/checkout");
-      } else {
-        toast.error(result.message || "Failed to proceed");
-      }
-    } catch (error) {
-      console.error("Buy now error:", error);
-      toast.error("Failed to proceed");
-    } finally {
-      setBuyingNow(null);
-    }
-  };
+// ✅ Wishlist — no login needed
+const handleToggleWishlist = async (e, productId) => {
+  e.preventDefault();
+  e.stopPropagation();
+  await toggleWishlist(productId);
+};
 
-  const handleToggleWishlist = async (e, productId) => {
-    e.preventDefault();
-    e.stopPropagation();
-    try {
-      const result = await toggleWishlist(productId);
-      if (!result.success) {
-        toast.error("Failed to update wishlist");
-      }
-    } catch (error) {
-      console.error("Wishlist error:", error);
-      toast.error("Failed to update wishlist");
-    }
-  };
+// 🔒 Buy Now — REQUIRES login
+const handleBuyNow = async (e, product) => {
+  e.preventDefault();
+  e.stopPropagation();
 
-  if (loading) {
-    return (
-      <section className="container py-8">
-        <div className="container">
-          <h2 className={`text-center text-[30px] mb-8 ${mincho.className}`}>
-            New Arrivals
-          </h2>
-          <div className="text-center py-12">Loading products...</div>
-        </div>
-      </section>
-    );
+  // Block guests — show login prompt
+  if (!isAuthenticated()) {
+    toast.error("Please login to purchase", {
+      duration: 2000,
+      icon: "🔒",
+    });
+    // Save intended destination so user comes back after login
+    sessionStorage.setItem("redirectAfterLogin", `/product/${product.slug}`);
+     setTimeout(() => {
+         router.push("/login");
+  }, 2000);
+   
+    return;
   }
+
+  if (addingToCart || buyingNow) return;
+  setBuyingNow(product._id);
+
+  try {
+    const buyNowItem = {
+      product: {
+        _id: product._id,
+        name: product.name,
+        slug: product.slug,
+        mainImage: product.mainImage,
+        category: product.category,
+        salePrice: product.salePrice,
+        productPrice: product.productPrice,
+        quantity: product.quantity,
+      },
+      quantity: 1,
+      salePrice: product.salePrice,
+    };
+
+    sessionStorage.setItem("buyNowItem", JSON.stringify(buyNowItem));
+    router.push("/checkout?buyNow=true");
+  } catch (error) {
+    toast.error("Failed to proceed");
+  } finally {
+    setBuyingNow(null);
+  }
+};
+
 
   return (
     <section className="container py-8">
@@ -287,7 +271,7 @@ const handleClick = () => {
                             : "Add to Cart"}
                         </button>
                         <button
-                          onClick={(e) => handleBuyNow(e, product._id)}
+                          onClick={(e) => handleBuyNow(e, p)}
                           disabled={isAnyLoading || product.quantity === 0}
                           className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:bg-orange-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >

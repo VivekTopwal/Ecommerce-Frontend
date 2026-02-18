@@ -8,7 +8,7 @@ const ForgotPasswordComponent = () => {
     <main className="w-full max-w-md mx-auto p-6 mt-25">
       <div className="mt-7 bg-white rounded-xl shadow-lg dark:bg-gray-800 dark:border dark:border-gray-700">
         <div className="p-4 sm:p-7">
-          
+
           <div className="text-center">
             <h1 className="block text-2xl font-bold text-gray-800 dark:text-white">
               Forgot password?
@@ -25,7 +25,7 @@ const ForgotPasswordComponent = () => {
             </p>
           </div>
 
-  
+
           <div className="mt-5">
             <form>
               <div className="grid gap-y-4">
@@ -48,10 +48,9 @@ const ForgotPasswordComponent = () => {
                   </div>
                 </div>
 
-               
                 <button
                   type="submit"
-                   className="w-full inline-flex justify-center items-center rounded-md
+                  className="w-full inline-flex justify-center items-center rounded-md
               bg-indigo-600 px-4 py-3 text-base font-semibold text-white
               hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
               disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -64,8 +63,6 @@ const ForgotPasswordComponent = () => {
           </div>
         </div>
       </div>
-
-
     </main>
   );
 };

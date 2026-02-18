@@ -8,9 +8,9 @@ export default function Home() {
   return (
     <>
       <Category />
-      <ProductList category="Haircare, Skincare, Crystals"/>
+      <ProductList category="Haircare, Skincare, Crystals" limit={11}/>
       <ProductSlider category="Pyrite"/>
-      <ProductList2  category="Pyrite Decor, Crystals"/>   
+      <ProductList2  category="Pyrite Decor, Crystals" limit={11}/>   
       <Features />
     </>
   );

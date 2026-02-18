@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
-import { Heart, ChevronRight } from "lucide-react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import { Heart, Loader2, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { Shippori_Mincho } from "next/font/google";
 import { useShop } from "@/app/context/ShopContext";
@@ -22,123 +22,113 @@ const formatPrice = (price) => {
   });
 };
 
-const ProductCard = ({ category, limit }) => {
-  const [products, setProducts] = useState([]);
- 
+const ProductCard = ({ itemsPerPage = 12, category = "Haircare" }) => {
+  const [allProducts, setAllProducts] = useState([]);
+  const [displayedProducts, setDisplayedProducts] = useState([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [addingToCart, setAddingToCart] = useState(null);
   const [buyingNow, setBuyingNow] = useState(null);
+
   const { addToCart, toggleWishlist, isInWishlist } = useShop();
   const router = useRouter();
-   const { isAuthenticated } = useAuth();
-  const handleClick = () => {
-   router.push("/pyrite-shop");
-}
+  const { token, isAuthenticated } = useAuth();
 
-    useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const params = new URLSearchParams();
-        if (category) {
-          const categoryValue = Array.isArray(category)
-            ? category.join(",")
-            : category;
-          params.append("category", categoryValue);
-        }
-        if (limit) {
-          params.append("limit", limit);
-        }
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/products?${params.toString()}`,
-          { cache: "no-store" }
-        );
+  const observerTarget = useRef(null);
 
-        const data = await res.json();
-       setProducts(data.products ?? data);
-      } catch (error) {
-        console.error("Failed to fetch products", error);
-        toast.error("Failed to load products");
-      } 
+  const tokenRef = useRef(token);
+  useEffect(() => {
+    tokenRef.current = token;
+  }, [token]);
+
+  const getAuthHeaders = useCallback(() => {
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${tokenRef.current}`,
     };
+  }, []);
 
-    fetchProducts();
-  }, [category, limit]); 
+useEffect(() => {
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
 
-//   const handleAddToCart = async (e, productId) => {
-//     e.preventDefault();
-//     e.stopPropagation();
+      let url = `${process.env.NEXT_PUBLIC_API_URL}/products`;
 
+      if (category) {
+        url += `?category=${encodeURIComponent(category)}`;
+      }
 
-// // if (!isAuthenticated()) {
-// //   toast.error("Please Login First");
-// //   setTimeout(() => {
-// //     router.push("/login");
-// //   }, 1000);
+      const res = await fetch(url, {
+        headers: getAuthHeaders(),
+        cache: "no-store",
+      });
 
-// //   return;
-// // }
+      const data = await res.json();
+      const products = data.products || data;
 
-//     if (addingToCart || buyingNow) return;
+      setAllProducts(products);
 
-//     setAddingToCart(productId);
+      const firstPage = products.slice(0, itemsPerPage);
+      setDisplayedProducts(firstPage);
+      setHasMore(products.length > itemsPerPage);
 
-//     try {
-//       const result = await addToCart(productId, 1);
+    } catch (error) {
+      console.error("Failed to fetch products", error);
+      toast.error("Failed to load products");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-//       if (result.success) {
-//       } else {
-//         toast.error(result.message || "Failed to add to cart");
-//       }
-//     } catch (error) {
-//       console.error("Add to cart error:", error);
-//       toast.error("Failed to add to cart");
-//     } finally {
-//       setAddingToCart(null);
-//     }
-//   };
-
-  // const handleBuyNow = async (e, productId) => {
-  //   e.preventDefault();
-  //   e.stopPropagation();
-
-  //   if (addingToCart || buyingNow) return;
-
-  //   setBuyingNow(productId);
-
-  //   try {
-  //     const result = await addToCart(productId, 1, true);
-
-  //     if (result.success) {
-  //       router.push("/checkout");
-  //     } else {
-  //       toast.error(result.message || "Failed to proceed");
-  //     }
-  //   } catch (error) {
-  //     console.error("Buy now error:", error);
-  //     toast.error("Failed to proceed");
-  //   } finally {
-  //     setBuyingNow(null);
-  //   }
-  // };
-
-  // const handleToggleWishlist = async (e, productId) => {
-  //   e.preventDefault();
-  //   e.stopPropagation();
-
-  //   try {
-  //     const result = await toggleWishlist(productId);
-  //     if (!result.success) {
-  //       toast.error("Failed to update wishlist");
-  //     }
-  //   } catch (error) {
-  //     console.error("Wishlist error:", error);
-  //     toast.error("Failed to update wishlist");
-  //   }
-  // };
+  fetchProducts();
+}, [token, isAuthenticated, itemsPerPage, category]);
 
 
+  const loadMoreProducts = useCallback(() => {
+    if (loadingMore || !hasMore) return;
 
-// ✅ Add to cart — works WITHOUT login
+    setLoadingMore(true);
 
+    setTimeout(() => {
+      const startIndex = page * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const newProducts = allProducts.slice(startIndex, endIndex);
+
+      if (newProducts.length > 0) {
+        setDisplayedProducts(prev => [...prev, ...newProducts]);
+        setPage(prev => prev + 1);
+        setHasMore(endIndex < allProducts.length);
+      } else {
+        setHasMore(false);
+      }
+
+      setLoadingMore(false);
+    }, 500);
+  }, [page, itemsPerPage, allProducts, loadingMore, hasMore]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          loadMoreProducts();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [loadMoreProducts, hasMore, loadingMore]);
 
 const handleAddToCart = async (e, productId) => {
   e.preventDefault();
@@ -150,25 +140,21 @@ const handleAddToCart = async (e, productId) => {
   setAddingToCart(null);
 };
 
-// ✅ Wishlist — no login needed
 const handleToggleWishlist = async (e, productId) => {
   e.preventDefault();
   e.stopPropagation();
   await toggleWishlist(productId);
 };
 
-// 🔒 Buy Now — REQUIRES login
 const handleBuyNow = async (e, product) => {
   e.preventDefault();
   e.stopPropagation();
 
-  // Block guests — show login prompt
   if (!isAuthenticated()) {
     toast.error("Please login to purchase", {
       duration: 2000,
       icon: "🔒",
     });
-    // Save intended destination so user comes back after login
     sessionStorage.setItem("redirectAfterLogin", `/product/${product.slug}`);
      setTimeout(() => {
          router.push("/login");
@@ -205,19 +191,47 @@ const handleBuyNow = async (e, product) => {
   }
 };
 
+
+  if (loading) {
+    return (
+      <section className="py-10">
+        <div className="container mx-auto px-4">
+          <div className="text-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto text-orange-400" />
+            <p className="mt-4 text-gray-600">Loading products...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-10">
       <div className="container mx-auto px-4">
-         <h2 className={`text-center text-[30px] mb-8 ${mincho.className}`}>
-          Pyrite Decor
+        <nav className="mb-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-[20px] text-gray-600 hover:text-orange-500 transition-colors group"
+          >
+            <ChevronLeft
+              size={24}
+              className="transition-transform group-hover:-translate-x-1"
+            />
+            <span>Back To Home</span>
+          </Link>
+        </nav>
+
+        <h2 className={`text-center text-[30px] mb-8 ${mincho.className}`}>
+          Haircare
         </h2>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products.map((p) => {
+          {displayedProducts.map((p) => {
             const isWishlisted = isInWishlist(p._id);
             const isAddingToCart = addingToCart === p._id;
             const isBuyingNow = buyingNow === p._id;
             const isAnyLoading = isAddingToCart || isBuyingNow;
-            
+
             return (
               <div
                 key={p._id}
@@ -236,11 +250,10 @@ const handleBuyNow = async (e, product) => {
                     )}
 
                     <button
-                      className={`absolute top-3 right-3 w-9 h-9 rounded-full shadow flex items-center justify-center transition-all cursor-pointer ${
-                        isWishlisted
+                      className={`absolute top-3 right-3 w-9 h-9 rounded-full shadow flex items-center justify-center transition-all cursor-pointer ${isWishlisted
                           ? "bg-red-500 text-white"
                           : "bg-white text-gray-700 hover:bg-gray-100"
-                      }`}
+                        }`}
                       onClick={(e) => handleToggleWishlist(e, p._id)}
                     >
                       <Heart
@@ -253,7 +266,7 @@ const handleBuyNow = async (e, product) => {
                       <span className="absolute top-3 left-3 bg-pink-600 text-white text-xs px-2 py-1 rounded">
                         {Math.round(
                           ((p.productPrice - p.salePrice) / p.productPrice) *
-                            100,
+                          100
                         )}
                         % off
                       </span>
@@ -284,7 +297,7 @@ const handleBuyNow = async (e, product) => {
                       <>
                         <span className="text-black">MRP: </span>
                         <span className="line-through text-gray-500 mr-1">
-                          ${formatPrice(p.productPrice)}
+                          ₹{formatPrice(p.productPrice)}
                         </span>
                       </>
                     )}
@@ -293,7 +306,7 @@ const handleBuyNow = async (e, product) => {
                         p.productPrice ? "text-red-600" : "text-gray-800"
                       }
                     >
-                      ${formatPrice(p.salePrice)}
+                      ₹{formatPrice(p.salePrice)}
                     </span>
                   </div>
 
@@ -302,7 +315,11 @@ const handleBuyNow = async (e, product) => {
                     disabled={isAnyLoading || p.quantity === 0}
                     className="w-full border py-2 rounded cursor-pointer border-[rgba(0,0,0,0.3)] hover:border-[rgba(0,0,0,0.5)] mt-2.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
-                    {isAddingToCart ? "Adding..." : p.quantity === 0 ? "Out of Stock" : "Add to Cart"}
+                    {isAddingToCart
+                      ? "Adding..."
+                      : p.quantity === 0
+                        ? "Out of Stock"
+                        : "Add to Cart"}
                   </button>
 
                   <button
@@ -316,28 +333,24 @@ const handleBuyNow = async (e, product) => {
               </div>
             );
           })}
+        </div>
 
-              <div className="relative h-[98%] rounded-md bg-gradient-to-b from-[#2a2a2a] to-[#1b1b1b] overflow-hidden px-8 py-10">
-            <div className="z-10 relative">
-              <h2 className="text-white text-3xl md:text-4xl font-serif leading-tight">
-               Pyrite Decor
-              </h2>
-
-              <Link
-                href="/pyrite-shop"
-                className="inline-block mt-3 text-sm text-white underline underline-offset-4 hover:opacity-80 transition"
-              >
-                Shop all
-              </Link>
+        <div ref={observerTarget} className="w-full py-8">
+          {loadingMore && (
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto text-orange-400" />
+              <p className="mt-4 text-gray-600">Loading more products...</p>
             </div>
+          )}
 
-            <button onClick={handleClick}
-              aria-label="Next"
-              className="absolute bottom-6 left-6 w-12 h-12 rounded-full border border-gray-500 flex items-center justify-center text-white hover:bg-white hover:text-black transition cursor-pointer"
-            >
-              <ChevronRight />
-            </button>
-          </div>
+          {!hasMore && displayedProducts.length > 0 && (
+            <div className="text-center text-gray-500">
+              <p>You&apos;ve reached the end!</p>
+              <p className="text-sm mt-2">
+                Showing all {displayedProducts.length} products
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </section>

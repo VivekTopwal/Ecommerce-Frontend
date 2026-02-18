@@ -7,7 +7,6 @@ import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-
 export default function CartPage() {
   const router = useRouter();
   const { cart, updateCartQuantity, removeFromCart, } = useShop();

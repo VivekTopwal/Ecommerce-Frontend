@@ -22,51 +22,38 @@ const formatPrice = (price) => {
   });
 };
 
-
-
-const ProductCard = ({ category = null, limit = 11 }) => {
+const ProductCard = ({ category, limit }) => {
   const [products, setProducts] = useState([]);
+
   const [addingToCart, setAddingToCart] = useState(null);
   const [buyingNow, setBuyingNow] = useState(null);
   const { addToCart, toggleWishlist, isInWishlist } = useShop();
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const handleClick = () => {
-   router.push("/shop");
-}
-  const { token, isAuthenticated } = useAuth();
-  const getAuthHeaders = () => {
-    return {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    };
+    router.push("/shop");
   };
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
-          headers: getAuthHeaders(),
-          cache: "no-store",
-        });
-
-        const data = await res.json();
-        let allProducts = data.products || data;
-
-       if (category) {
-          const categories = typeof category === 'string' 
-            ? category.split(',').map(cat => cat.trim()) 
+        const params = new URLSearchParams();
+        if (category) {
+          const categoryValue = Array.isArray(category)
+            ? category.join(",")
             : category;
-          
-          allProducts = allProducts.filter(p => 
-            categories.includes(p.category)
-          );
+          params.append("category", categoryValue);
         }
         if (limit) {
-          allProducts = allProducts.slice(0, limit);
+          params.append("limit", limit);
         }
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/products?${params.toString()}`,
+          { cache: "no-store" },
+        );
 
-        setProducts(allProducts);
-       
+        const data = await res.json();
+        setProducts(data.products ?? data);
       } catch (error) {
         console.error("Failed to fetch products", error);
         toast.error("Failed to load products");
@@ -74,67 +61,136 @@ const ProductCard = ({ category = null, limit = 11 }) => {
     };
 
     fetchProducts();
-  }, [token, isAuthenticated, limit, category]);
+  }, [category, limit]);
+
+  //   const handleAddToCart = async (e, productId) => {
+  //     e.preventDefault();
+  //     e.stopPropagation();
+
+  // // if (!isAuthenticated()) {
+  // //   toast.error("Please Login First");
+  // //   setTimeout(() => {
+  // //     router.push("/login");
+  // //   }, 1000);
+
+  // //   return;
+  // // }
+
+  //     if (addingToCart || buyingNow) return;
+
+  //     setAddingToCart(productId);
+
+  //     try {
+  //       const result = await addToCart(productId, 1);
+
+  //       if (result.success) {
+  //       } else {
+  //         toast.error(result.message || "Failed to add to cart");
+  //       }
+  //     } catch (error) {
+  //       console.error("Add to cart error:", error);
+  //       toast.error("Failed to add to cart");
+  //     } finally {
+  //       setAddingToCart(null);
+  //     }
+  //   };
+
+  // const handleBuyNow = async (e, productId) => {
+  //   e.preventDefault();
+  //   e.stopPropagation();
+
+  //   if (addingToCart || buyingNow) return;
+
+  //   setBuyingNow(productId);
+
+  //   try {
+  //     const result = await addToCart(productId, 1, true);
+
+  //     if (result.success) {
+  //       router.push("/checkout");
+  //     } else {
+  //       toast.error(result.message || "Failed to proceed");
+  //     }
+  //   } catch (error) {
+  //     console.error("Buy now error:", error);
+  //     toast.error("Failed to proceed");
+  //   } finally {
+  //     setBuyingNow(null);
+  //   }
+  // };
+
+  // const handleToggleWishlist = async (e, productId) => {
+  //   e.preventDefault();
+  //   e.stopPropagation();
+
+  //   try {
+  //     const result = await toggleWishlist(productId);
+  //     if (!result.success) {
+  //       toast.error("Failed to update wishlist");
+  //     }
+  //   } catch (error) {
+  //     console.error("Wishlist error:", error);
+  //     toast.error("Failed to update wishlist");
+  //   }
+  // };
 
   const handleAddToCart = async (e, productId) => {
     e.preventDefault();
     e.stopPropagation();
-
     if (addingToCart || buyingNow) return;
 
     setAddingToCart(productId);
-
-    try {
-      const result = await addToCart(productId, 1);
-
-      if (result.success) {
-      } else {
-        toast.error(result.message || "Failed to add to cart");
-      }
-    } catch (error) {
-      console.error("Add to cart error:", error);
-      toast.error("Failed to add to cart");
-    } finally {
-      setAddingToCart(null);
-    }
-  };
-
-  const handleBuyNow = async (e, productId) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (addingToCart || buyingNow) return;
-
-    setBuyingNow(productId);
-
-    try {
-      const result = await addToCart(productId, 1, true);
-
-      if (result.success) {
-        router.push("/checkout");
-      } else {
-        toast.error(result.message || "Failed to proceed");
-      }
-    } catch (error) {
-      console.error("Buy now error:", error);
-      toast.error("Failed to proceed");
-    } finally {
-      setBuyingNow(null);
-    }
+    await addToCart(productId, 1);
+    setAddingToCart(null);
   };
 
   const handleToggleWishlist = async (e, productId) => {
     e.preventDefault();
     e.stopPropagation();
+    await toggleWishlist(productId);
+  };
+
+  const handleBuyNow = async (e, product) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!isAuthenticated()) {
+      toast.error("Please login to purchase", {
+        duration: 2000,
+        icon: "🔒",
+      });
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
+      return;
+    }
+
+    if (addingToCart || buyingNow) return;
+    setBuyingNow(product?._id);
 
     try {
-      const result = await toggleWishlist(productId);
-      if (!result.success) {
-        toast.error("Failed to update wishlist");
-      }
+      const item = {
+        product: {
+          _id: product?._id,
+          name: product?.name,
+          slug: product?.slug,
+          mainImage: product?.mainImage,
+          salePrice: product?.salePrice,
+          productPrice: product?.productPrice,
+          quantity: product?.quantity,
+          category: product?.category,
+        },
+        quantity: 1,
+        salePrice: product?.salePrice,
+      };
+
+      sessionStorage.setItem("buyNowItem", JSON.stringify(item));
+      router.push("/checkout?buyNow=true");
     } catch (error) {
-      console.error("Wishlist error:", error);
-      toast.error("Failed to update wishlist");
+      console.error("Buy now error:", error);
+      toast.error("Failed to proceed");
+    } finally {
+      setBuyingNow(null);
     }
   };
 
@@ -240,7 +296,7 @@ const ProductCard = ({ category = null, limit = 11 }) => {
                   </button>
 
                   <button
-                    onClick={(e) => handleBuyNow(e, p._id)}
+                    onClick={(e) => handleBuyNow(e, p)}
                     disabled={isAnyLoading || p.quantity === 0}
                     className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:bg-orange-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -265,7 +321,8 @@ const ProductCard = ({ category = null, limit = 11 }) => {
               </Link>
             </div>
 
-            <button onClick={handleClick}
+            <button
+              onClick={handleClick}
               aria-label="Next"
               className="absolute bottom-6 left-6 w-12 h-12 rounded-full border border-gray-500 flex items-center justify-center text-white hover:bg-white hover:text-black transition cursor-pointer"
             >

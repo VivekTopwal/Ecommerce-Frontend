@@ -20,7 +20,6 @@ export default function ProductDetail() {
   const { slug } = useParams();
   const { addToCart, toggleWishlist, isInWishlist } = useShop();
   const { isAuthenticated } = useAuth();
-
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [addingToCart, setAddingToCart] = useState(false);
@@ -37,7 +36,7 @@ export default function ProductDetail() {
     const fetchProduct = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/products/${slug}`
+          `${process.env.NEXT_PUBLIC_API_URL}/products/${slug}`,
         );
         const data = await res.json();
 
@@ -45,7 +44,7 @@ export default function ProductDetail() {
           const p = data.product;
 
           const imageList = [p.mainImage, ...(p.featureImages || [])].filter(
-            Boolean
+            Boolean,
           );
 
           setProduct(p);
@@ -70,7 +69,7 @@ export default function ProductDetail() {
     if (product.productPrice > product.salePrice) {
       return Math.round(
         ((product.productPrice - product.salePrice) / product.productPrice) *
-          100
+          100,
       );
     }
     return 0;
@@ -84,22 +83,72 @@ export default function ProductDetail() {
     }
   };
 
-  const handleAddToCart = async () => {
-    if (!isAuthenticated()) {
-      toast.error("Please login to add items to cart");
-      router.push("/login");
-      return;
-    }
+  // const handleAddToCart = async () => {
+  //   if (!isAuthenticated()) {
+  //     toast.error("Please login to add items to cart");
+  //     router.push("/login");
+  //     return;
+  //   }
 
+  //   setAddingToCart(true);
+  //   const result = await addToCart(product._id, quantity);
+  //   setAddingToCart(false);
+  // };
+  const handleAddToCart = async () => {
     setAddingToCart(true);
     const result = await addToCart(product._id, quantity);
     setAddingToCart(false);
   };
 
+  // const handleBuyNow = async () => {
+  //   if (!isAuthenticated()) {
+  //     toast.error("Please login to purchase");
+
+  //     router.push("/login");
+  //     return;
+  //   }
+
+  //   setBuyingNow(true);
+
+  //   try {
+  //     const buyNowItem = {
+  //       product: {
+  //         _id: product._id,
+  //         name: product.name,
+  //         slug: product.slug,
+  //         mainImage: product.mainImage,
+  //         category: product.category,
+  //         salePrice: product.salePrice,
+  //         productPrice: product.productPrice,
+  //         quantity: product.quantity,
+  //       },
+  //       quantity: quantity,
+  //       salePrice: product.salePrice,
+  //       productPrice: product.productPrice,
+  //     };
+
+  //     sessionStorage.setItem("buyNowItem", JSON.stringify(buyNowItem));
+
+  //     router.push("/checkout?buyNow=true");
+  //   } catch (error) {
+  //     console.error("Buy now error:", error);
+  //     toast.error("Failed to proceed to checkout");
+  //   } finally {
+  //     setBuyingNow(false);
+  //   }
+  // };
+
   const handleBuyNow = async () => {
     if (!isAuthenticated()) {
-      toast.error("Please login to purchase");
-      router.push("/login");
+      toast.error("Please login to purchase", {
+      icon: "🔒",
+      duration: 1900, 
+    });
+      sessionStorage.setItem("redirectAfterLogin", `/product/${product.slug}`);
+
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
       return;
     }
 
@@ -123,7 +172,6 @@ export default function ProductDetail() {
       };
 
       sessionStorage.setItem("buyNowItem", JSON.stringify(buyNowItem));
-
       router.push("/checkout?buyNow=true");
     } catch (error) {
       console.error("Buy now error:", error);
@@ -133,13 +181,17 @@ export default function ProductDetail() {
     }
   };
 
-  const handleToggleWishlist = async () => {
-    if (!isAuthenticated()) {
-      toast.error("Please login to add items to wishlist");
-      router.push("/login");
-      return;
-    }
+  // const handleToggleWishlist = async () => {
+  //   if (!isAuthenticated()) {
+  //     toast.error("Please login to add items to wishlist");
+  //     router.push("/login");
+  //     return;
+  //   }
 
+  //   await toggleWishlist(product._id);
+  // };
+
+  const handleToggleWishlist = async () => {
     await toggleWishlist(product._id);
   };
 
@@ -197,17 +249,6 @@ export default function ProductDetail() {
 
             <li className="mx-1 text-gray-400">/</li>
 
-            <li>
-              <Link
-                href={`/category/${product.category}`}
-                className="hover:text-orange-500 transition-colors capitalize"
-              >
-                {product.category}
-              </Link>
-            </li>
-
-            <li className="mx-1 text-gray-400">/</li>
-
             <li
               className="text-gray-900 font-medium truncate max-w-[220px]"
               aria-current="page"
@@ -219,7 +260,6 @@ export default function ProductDetail() {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 bg-white rounded-lg shadow-sm p-6 lg:p-8">
-          {/* Image Section */}
           <div className="space-y-4">
             <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
               {activeImage && (
@@ -240,7 +280,7 @@ export default function ProductDetail() {
 
               <button
                 onClick={handleToggleWishlist}
-                className={`absolute top-4 right-4 w-11 h-11 rounded-full shadow-lg flex items-center justify-center transition-all duration-200 ${
+                className={`absolute top-4 right-4 w-11 h-11 rounded-full shadow-lg flex items-center justify-center cursor-pointer transition-all duration-200 ${
                   isWishlisted
                     ? "bg-red-500 text-white"
                     : "bg-white text-gray-700 hover:bg-gray-100"
@@ -277,7 +317,6 @@ export default function ProductDetail() {
             )}
           </div>
 
-          {/* Product Info Section */}
           <div className="space-y-6">
             <div>
               <p className="text-sm text-orange-500 font-semibold uppercase tracking-wider mb-2">
@@ -381,7 +420,7 @@ export default function ProductDetail() {
               <button
                 onClick={handleBuyNow}
                 disabled={buyingNow || product.quantity === 0}
-                className="w-full bg-gradient-to-r from-orange-400 to-orange-500 text-white py-4 rounded-lg font-semibold text-lg hover:from-orange-500 hover:to-orange-600 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-orange-400 to-orange-500 text-white py-4 rounded-lg font-semibold text-lg hover:from-orange-500 hover:to-orange-600 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 cursor-pointer"
               >
                 {buyingNow ? "Processing..." : "BUY NOW"}
               </button>
@@ -389,7 +428,7 @@ export default function ProductDetail() {
               <button
                 onClick={handleAddToCart}
                 disabled={addingToCart || product.quantity === 0}
-                className="w-full border-2 border-gray-800 py-4 rounded-lg font-semibold text-lg hover:bg-gray-800 hover:text-white transition-all duration-200 flex justify-center items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full border-2 border-gray-800 py-4 rounded-lg font-semibold text-lg hover:bg-gray-800 hover:text-white transition-all duration-200 flex justify-center items-center gap-3 disabled:opacity-50 cursor-pointer"
               >
                 <ShoppingCart size={22} />
                 {addingToCart ? "Adding..." : "Add to Cart"}

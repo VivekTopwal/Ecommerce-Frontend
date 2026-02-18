@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { Heart, Loader2 } from "lucide-react";
+import { Heart, Loader2, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { Shippori_Mincho } from "next/font/google";
 import { useShop } from "@/app/context/ShopContext";
@@ -22,7 +22,7 @@ const formatPrice = (price) => {
   });
 };
 
-const ProductCard = ({ itemsPerPage = 12 }) => {
+const ProductCard = ({ itemsPerPage = 12, category = "Fragrances" }) => {
   const [allProducts, setAllProducts] = useState([]);
   const [displayedProducts, setDisplayedProducts] = useState([]);
   const [page, setPage] = useState(1);
@@ -31,59 +31,72 @@ const ProductCard = ({ itemsPerPage = 12 }) => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [addingToCart, setAddingToCart] = useState(null);
   const [buyingNow, setBuyingNow] = useState(null);
-  
+
   const { addToCart, toggleWishlist, isInWishlist } = useShop();
   const router = useRouter();
   const { token, isAuthenticated } = useAuth();
-  
+
   const observerTarget = useRef(null);
 
-  const getAuthHeaders = () => {
+  const tokenRef = useRef(token);
+  useEffect(() => {
+    tokenRef.current = token;
+  }, [token]);
+
+  const getAuthHeaders = useCallback(() => {
     return {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${tokenRef.current}`,
     };
+  }, []);
+
+useEffect(() => {
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+
+      let url = `${process.env.NEXT_PUBLIC_API_URL}/products`;
+
+      if (category) {
+        url += `?category=${encodeURIComponent(category)}`;
+      }
+
+      const res = await fetch(url, {
+        headers: getAuthHeaders(),
+        cache: "no-store",
+      });
+
+      const data = await res.json();
+      const products = data.products || data;
+
+      setAllProducts(products);
+
+      const firstPage = products.slice(0, itemsPerPage);
+      setDisplayedProducts(firstPage);
+      setHasMore(products.length > itemsPerPage);
+
+    } catch (error) {
+      console.error("Failed to fetch products", error);
+      toast.error("Failed to load products");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
-          headers: getAuthHeaders(),
-          cache: "no-store",
-        });
+  fetchProducts();
+}, [token, isAuthenticated, itemsPerPage, category]);
 
-        const data = await res.json();
-        const products = data.products || data;
-        
-        setAllProducts(products);
-        
-        const firstPage = products.slice(0, itemsPerPage);
-        setDisplayedProducts(firstPage);
-        setHasMore(products.length > itemsPerPage);
-        
-      } catch (error) {
-        console.error("Failed to fetch products", error);
-        toast.error("Failed to load products");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, [token, isAuthenticated, itemsPerPage]);
 
   const loadMoreProducts = useCallback(() => {
     if (loadingMore || !hasMore) return;
 
     setLoadingMore(true);
-    
+
     setTimeout(() => {
       const startIndex = page * itemsPerPage;
       const endIndex = startIndex + itemsPerPage;
       const newProducts = allProducts.slice(startIndex, endIndex);
-      
+
       if (newProducts.length > 0) {
         setDisplayedProducts(prev => [...prev, ...newProducts]);
         setPage(prev => prev + 1);
@@ -91,9 +104,9 @@ const ProductCard = ({ itemsPerPage = 12 }) => {
       } else {
         setHasMore(false);
       }
-      
+
       setLoadingMore(false);
-    }, 500); 
+    }, 500);
   }, [page, itemsPerPage, allProducts, loadingMore, hasMore]);
 
   useEffect(() => {
@@ -117,66 +130,70 @@ const ProductCard = ({ itemsPerPage = 12 }) => {
     };
   }, [loadMoreProducts, hasMore, loadingMore]);
 
-  const handleAddToCart = async (e, productId) => {
-    e.preventDefault();
-    e.stopPropagation();
+const handleAddToCart = async (e, productId) => {
+  e.preventDefault();
+  e.stopPropagation();
+  if (addingToCart || buyingNow) return;
 
-    if (addingToCart || buyingNow) return;
+  setAddingToCart(productId);
+  await addToCart(productId, 1);
+  setAddingToCart(null);
+};
 
-    setAddingToCart(productId);
 
-    try {
-      const result = await addToCart(productId, 1);
+const handleToggleWishlist = async (e, productId) => {
+  e.preventDefault();
+  e.stopPropagation();
+  await toggleWishlist(productId);
+};
 
-      if (!result.success) {
-        toast.error(result.message || "Failed to add to cart");
-      }
-    } catch (error) {
-      console.error("Add to cart error:", error);
-      toast.error("Failed to add to cart");
-    } finally {
-      setAddingToCart(null);
-    }
-  };
 
-  const handleBuyNow = async (e, productId) => {
-    e.preventDefault();
-    e.stopPropagation();
+const handleBuyNow = async (e, product) => {
+  e.preventDefault();
+  e.stopPropagation();
 
-    if (addingToCart || buyingNow) return;
 
-    setBuyingNow(productId);
+  if (!isAuthenticated()) {
+    toast.error("Please login to purchase", {
+      duration: 2000,
+      icon: "🔒",
+    });
 
-    try {
-      const result = await addToCart(productId, 1, true);
+    sessionStorage.setItem("redirectAfterLogin", `/product/${product.slug}`);
+     setTimeout(() => {
+         router.push("/login");
+  }, 2000);
+   
+    return;
+  }
 
-      if (result.success) {
-        router.push("/checkout");
-      } else {
-        toast.error(result.message || "Failed to proceed");
-      }
-    } catch (error) {
-      console.error("Buy now error:", error);
-      toast.error("Failed to proceed");
-    } finally {
-      setBuyingNow(null);
-    }
-  };
+  if (addingToCart || buyingNow) return;
+  setBuyingNow(product._id);
 
-  const handleToggleWishlist = async (e, productId) => {
-    e.preventDefault();
-    e.stopPropagation();
+  try {
+    const buyNowItem = {
+      product: {
+        _id: product._id,
+        name: product.name,
+        slug: product.slug,
+        mainImage: product.mainImage,
+        category: product.category,
+        salePrice: product.salePrice,
+        productPrice: product.productPrice,
+        quantity: product.quantity,
+      },
+      quantity: 1,
+      salePrice: product.salePrice,
+    };
 
-    try {
-      const result = await toggleWishlist(productId);
-      if (!result.success) {
-        toast.error("Failed to update wishlist");
-      }
-    } catch (error) {
-      console.error("Wishlist error:", error);
-      toast.error("Failed to update wishlist");
-    }
-  };
+    sessionStorage.setItem("buyNowItem", JSON.stringify(buyNowItem));
+    router.push("/checkout?buyNow=true");
+  } catch (error) {
+    toast.error("Failed to proceed");
+  } finally {
+    setBuyingNow(null);
+  }
+};
 
   if (loading) {
     return (
@@ -194,10 +211,23 @@ const ProductCard = ({ itemsPerPage = 12 }) => {
   return (
     <section className="py-10">
       <div className="container mx-auto px-4">
+        <nav className="mb-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-[20px] text-gray-600 hover:text-orange-500 transition-colors group"
+          >
+            <ChevronLeft
+              size={24}
+              className="transition-transform group-hover:-translate-x-1"
+            />
+            <span>Back To Home</span>
+          </Link>
+        </nav>
+
         <h2 className={`text-center text-[30px] mb-8 ${mincho.className}`}>
-          All Collections
+          Fragrances
         </h2>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {displayedProducts.map((p) => {
             const isWishlisted = isInWishlist(p._id);
@@ -223,11 +253,10 @@ const ProductCard = ({ itemsPerPage = 12 }) => {
                     )}
 
                     <button
-                      className={`absolute top-3 right-3 w-9 h-9 rounded-full shadow flex items-center justify-center transition-all cursor-pointer ${
-                        isWishlisted
+                      className={`absolute top-3 right-3 w-9 h-9 rounded-full shadow flex items-center justify-center transition-all cursor-pointer ${isWishlisted
                           ? "bg-red-500 text-white"
                           : "bg-white text-gray-700 hover:bg-gray-100"
-                      }`}
+                        }`}
                       onClick={(e) => handleToggleWishlist(e, p._id)}
                     >
                       <Heart
@@ -240,7 +269,7 @@ const ProductCard = ({ itemsPerPage = 12 }) => {
                       <span className="absolute top-3 left-3 bg-pink-600 text-white text-xs px-2 py-1 rounded">
                         {Math.round(
                           ((p.productPrice - p.salePrice) / p.productPrice) *
-                            100
+                          100
                         )}
                         % off
                       </span>
@@ -271,7 +300,7 @@ const ProductCard = ({ itemsPerPage = 12 }) => {
                       <>
                         <span className="text-black">MRP: </span>
                         <span className="line-through text-gray-500 mr-1">
-                          ${formatPrice(p.productPrice)}
+                          ₹{formatPrice(p.productPrice)}
                         </span>
                       </>
                     )}
@@ -280,7 +309,7 @@ const ProductCard = ({ itemsPerPage = 12 }) => {
                         p.productPrice ? "text-red-600" : "text-gray-800"
                       }
                     >
-                      ${formatPrice(p.salePrice)}
+                      ₹{formatPrice(p.salePrice)}
                     </span>
                   </div>
 
@@ -297,7 +326,7 @@ const ProductCard = ({ itemsPerPage = 12 }) => {
                   </button>
 
                   <button
-                    onClick={(e) => handleBuyNow(e, p._id)}
+                    onClick={(e) => handleBuyNow(e, p)}
                     disabled={isAnyLoading || p.quantity === 0}
                     className="w-full bg-orange-400 text-white py-2 rounded font-semibold cursor-pointer border border-[rgba(0,0,0,0.1)] hover:bg-orange-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -316,7 +345,7 @@ const ProductCard = ({ itemsPerPage = 12 }) => {
               <p className="mt-4 text-gray-600">Loading more products...</p>
             </div>
           )}
-          
+
           {!hasMore && displayedProducts.length > 0 && (
             <div className="text-center text-gray-500">
               <p>You&apos;ve reached the end!</p>

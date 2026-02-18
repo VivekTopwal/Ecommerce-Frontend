@@ -37,7 +37,6 @@ export default function LoginFormComponent() {
       if (result.success) {
         toast.success("Login successful!");
         
-        // Redirect based on user role
         if (result.user.role === "admin") {
           router.push("/admin");
         } else {
@@ -84,7 +83,7 @@ export default function LoginFormComponent() {
         </div>
 
         <form className="space-y-6 mt-8" onSubmit={handleSubmit}>
-          {/* Email Field */}
+       
           <div>
             <label
               htmlFor="email"
@@ -109,7 +108,7 @@ export default function LoginFormComponent() {
             />
           </div>
 
-          {/* Password Field */}
+      
           <div>
             <label
               htmlFor="password"
@@ -133,7 +132,7 @@ export default function LoginFormComponent() {
             />
           </div>
 
-          {/* Remember Me & Forgot Password */}
+       
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <input
@@ -160,7 +159,6 @@ export default function LoginFormComponent() {
             </Link>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}

@@ -5,7 +5,6 @@ import { Trash2, ShoppingCart, Heart, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
-import ProtectedRoute from "@/app/components/ProtectedRoute";
 import toast from "react-hot-toast";
 
 export default function WishlistPage() {
@@ -30,7 +29,7 @@ export default function WishlistPage() {
               try {
                 await toggleWishlist(productId);
                 toast.dismiss(loadingToast);
-                toast.success("Removed from wishlist");
+                
               } catch (error) {
                 toast.dismiss(loadingToast);
                 toast.error("Failed to remove from wishlist");
@@ -62,7 +61,7 @@ export default function WishlistPage() {
     const result = await addToCart(product._id, 1);
     
     if (result.success) {
-      toast.success(result.message || "Added to cart!");
+     
     } else {
       toast.error(result.message || "Failed to add to cart");
     }
@@ -82,7 +81,7 @@ export default function WishlistPage() {
     toast.success("All items added to cart!");
   };
 
-  if (!wishlist || wishlist.products.length === 0) {
+ if (!wishlist?.products?.length) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center max-w-md px-4">
@@ -104,7 +103,7 @@ export default function WishlistPage() {
   }
 
   return (
-     <ProtectedRoute>
+    
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
       
@@ -208,6 +207,6 @@ export default function WishlistPage() {
         </div>
       </div>
     </div>
-    </ProtectedRoute>
+
   );
 }

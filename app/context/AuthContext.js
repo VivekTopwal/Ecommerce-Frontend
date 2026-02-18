@@ -23,37 +23,85 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  const login = async (email, password) => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+  // const login = async (email, password) => {
+  //   try {
+  //     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({ email, password }),
+  //     });
+
+  //     const data = await res.json();
+
+  //     if (data.success) {
+  //       Cookies.set("token", data.token, { 
+  //         expires: 7, 
+  //         path: '/',
+  //         sameSite: 'lax'
+  //       });
+  //       localStorage.setItem("user", JSON.stringify(data.user));
+        
+  //       setToken(data.token);
+  //       setUser(data.user);
+  //       return { success: true, user: data.user };
+  //     } else {
+  //       return { success: false, message: data.message };
+  //     }
+  //   } catch (error) {
+  //     console.error("Login error:", error);
+  //     return { success: false, message: "Login failed. Please try again." };
+  //   }
+  // };
+
+const login = async (email, password) => {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+      {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
+      }
+    );
+
+    const data = await res.json();
+
+    if (data.success) {
+      Cookies.set("token", data.token, {
+        expires: 7,
+        path: "/",
+        sameSite: "lax",
       });
 
-      const data = await res.json();
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-      if (data.success) {
-        Cookies.set("token", data.token, { 
-          expires: 7, 
-          path: '/',
-          sameSite: 'lax'
-        });
-        localStorage.setItem("user", JSON.stringify(data.user));
-        
-        setToken(data.token);
-        setUser(data.user);
-        return { success: true, user: data.user };
+      setToken(data.token);
+      setUser(data.user);
+
+      const redirectTo = sessionStorage.getItem("redirectAfterLogin");
+
+      if (redirectTo) {
+        sessionStorage.removeItem("redirectAfterLogin");
+        router.push(redirectTo);
       } else {
-        return { success: false, message: data.message };
+        router.push("/");
       }
-    } catch (error) {
-      console.error("Login error:", error);
-      return { success: false, message: "Login failed. Please try again." };
+
+      return { success: true, user: data.user };
+    } else {
+      return { success: false, message: data.message };
     }
-  };
+  } catch (error) {
+    console.error("Login error:", error);
+    return { success: false, message: "Login failed. Please try again." };
+  }
+};
+
+
 
   const adminLogin = async (email, password) => {
     try {

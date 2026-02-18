@@ -10,7 +10,7 @@ export default async function dbConnect() {
 
     try {
         const conn = await mongoose.connect(process.env.MONGODB_URI, {
-            dbName: "next_app_db",
+            dbName: "next1_app_db",
         });
 
         isConnected = conn.connections[0].readyState === 1;

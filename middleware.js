@@ -4,10 +4,9 @@ export function middleware(request) {
   const token = request.cookies.get('token')?.value;
   const path = request.nextUrl.pathname;
 
-
   const isAdminRoute = path.startsWith('/admin') && !path.startsWith('/admin/login');
   const isAuthRoute = path === '/login' || path === '/register';
-  const isProtectedRoute = path === '/cart' || path === '/wishlist' || path === '/checkout' || path.startsWith('/order-confirmation');
+  const isProtectedRoute = path ===  path === '/checkout' || path.startsWith('/order-confirmation');
 
   if (isProtectedRoute && !token) {
     return NextResponse.redirect(new URL('/login', request.url));
@@ -31,8 +30,6 @@ export function middleware(request) {
 export const config = {
   matcher: [
     '/admin/:path*',
-    '/cart',
-    '/wishlist',
     '/checkout',
     '/order-confirmation/:path*',
     '/login',
