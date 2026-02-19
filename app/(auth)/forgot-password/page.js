@@ -2,8 +2,8 @@ import ForgotPasswordComponent from "@/app/components/forgot-password/ForgotPass
 
 export default function ForgotPassword() {
     return (
-        <main className="wrap">          
+        <>          
             <ForgotPasswordComponent />
-        </main>
+        </>
     );  
 }

@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 export default function RegisterFormComponent() {
   const router = useRouter();
   const { register } = useAuth();
-  
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -20,7 +20,7 @@ export default function RegisterFormComponent() {
     confirmPassword: "",
     agreeToTerms: false,
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -30,7 +30,6 @@ export default function RegisterFormComponent() {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
-    
 
     if (errors[name]) {
       setErrors((prev) => ({
@@ -86,7 +85,7 @@ export default function RegisterFormComponent() {
 
     try {
       const { confirmPassword, agreeToTerms, ...userData } = formData;
-      
+
       const result = await register(userData);
 
       if (result.success) {
@@ -133,7 +132,6 @@ export default function RegisterFormComponent() {
         </div>
 
         <form className="space-y-6 mt-8" onSubmit={handleSubmit}>
-          
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label
@@ -153,7 +151,7 @@ export default function RegisterFormComponent() {
                 value={formData.firstName}
                 onChange={handleChange}
                 className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm sm:text-sm
-                  ${errors.firstName ? 'border-red-500' : 'border-gray-300'}
+                  ${errors.firstName ? "border-red-500" : "border-gray-300"}
                   placeholder-gray-400
                   dark:bg-gray-700 dark:border-gray-600 dark:text-white
                   focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500`}
@@ -180,7 +178,7 @@ export default function RegisterFormComponent() {
                 value={formData.lastName}
                 onChange={handleChange}
                 className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm sm:text-sm
-                  ${errors.lastName ? 'border-red-500' : 'border-gray-300'}
+                  ${errors.lastName ? "border-red-500" : "border-gray-300"}
                   placeholder-gray-400
                   dark:bg-gray-700 dark:border-gray-600 dark:text-white
                   focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500`}
@@ -191,7 +189,6 @@ export default function RegisterFormComponent() {
             </div>
           </div>
 
-       
           <div>
             <label
               htmlFor="email"
@@ -209,7 +206,7 @@ export default function RegisterFormComponent() {
               value={formData.email}
               onChange={handleChange}
               className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm sm:text-sm
-                ${errors.email ? 'border-red-500' : 'border-gray-300'}
+                ${errors.email ? "border-red-500" : "border-gray-300"}
                 placeholder-gray-400
                 dark:bg-gray-700 dark:border-gray-600 dark:text-white
                 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500`}
@@ -219,7 +216,6 @@ export default function RegisterFormComponent() {
             )}
           </div>
 
-  
           <div>
             <label
               htmlFor="phone"
@@ -242,7 +238,6 @@ export default function RegisterFormComponent() {
             />
           </div>
 
-     
           <div>
             <label
               htmlFor="password"
@@ -260,7 +255,7 @@ export default function RegisterFormComponent() {
               value={formData.password}
               onChange={handleChange}
               className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm sm:text-sm
-                ${errors.password ? 'border-red-500' : 'border-gray-300'}
+                ${errors.password ? "border-red-500" : "border-gray-300"}
                 placeholder-gray-400
                 dark:bg-gray-700 dark:border-gray-600 dark:text-white
                 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500`}
@@ -270,7 +265,6 @@ export default function RegisterFormComponent() {
             )}
           </div>
 
-     
           <div>
             <label
               htmlFor="confirmPassword"
@@ -288,17 +282,18 @@ export default function RegisterFormComponent() {
               value={formData.confirmPassword}
               onChange={handleChange}
               className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm sm:text-sm
-                ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'}
+                ${errors.confirmPassword ? "border-red-500" : "border-gray-300"}
                 placeholder-gray-400
                 dark:bg-gray-700 dark:border-gray-600 dark:text-white
                 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500`}
             />
             {errors.confirmPassword && (
-              <p className="mt-1 text-xs text-red-500">{errors.confirmPassword}</p>
+              <p className="mt-1 text-xs text-red-500">
+                {errors.confirmPassword}
+              </p>
             )}
           </div>
 
-       
           <div>
             <div className="flex items-center">
               <input
@@ -316,6 +311,8 @@ export default function RegisterFormComponent() {
                 I agree to the{" "}
                 <Link
                   href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
                 >
                   Terms and Conditions
@@ -327,7 +324,6 @@ export default function RegisterFormComponent() {
             )}
           </div>
 
-      
           <button
             type="submit"
             disabled={loading}
@@ -365,8 +361,6 @@ export default function RegisterFormComponent() {
             )}
           </button>
         </form>
-
-  
       </div>
     </div>
   );

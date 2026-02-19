@@ -8,6 +8,8 @@ import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { CreditCard, Truck, MapPin, ShoppingBag } from "lucide-react";
 import toast from "react-hot-toast";
+import Nav from "@/app/components/common/Nav";
+import Footer from "@/app/components/common/Footer";
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -15,7 +17,6 @@ export default function CheckoutPage() {
     const { token } = useAuth();                    
     const [loading, setLoading] = useState(false);
     const [pageReady, setPageReady] = useState(false);
-
     const searchParams = useSearchParams();
     const [isBuyNow, setIsBuyNow] = useState(false);
     const [buyNowItem, setBuyNowItem] = useState(null);
@@ -203,20 +204,10 @@ export default function CheckoutPage() {
     const subtotal = calculateSubtotal();
 
     return (
+        <>
+        <Nav/>
         <div className="min-h-screen bg-gray-50 py-8 px-4">
             <div className="max-w-7xl mx-auto">
-                <nav className="mb-6">
-                    <Link
-                        href="/"
-                        className="inline-flex items-center gap-2 text-[20px] text-gray-600 hover:text-orange-500 transition-colors group"
-                    >
-                        <ChevronLeft
-                            size={24}
-                            className="transition-transform group-hover:-translate-x-1"
-                        />
-                        <span>Back To Home</span>
-                    </Link>
-                </nav>
                 <h1 className="text-3xl font-bold mb-8 text-center">Checkout</h1>
 
                 <form onSubmit={handleSubmit}>
@@ -599,5 +590,7 @@ export default function CheckoutPage() {
                 </form>
             </div>
         </div>
+        <Footer/>
+        </>
     );
 }

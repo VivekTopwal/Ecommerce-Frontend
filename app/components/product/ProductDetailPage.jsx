@@ -9,6 +9,8 @@ import { useRouter } from "next/navigation";
 import { useShop } from "@/app/context/ShopContext";
 import { useAuth } from "@/app/context/AuthContext";
 import toast from "react-hot-toast";
+import Nav from "@/app/components/common/Nav";
+import Footer from "@/app/components/common/Footer";
 
 const mincho = Shippori_Mincho({
   subsets: ["latin"],
@@ -83,60 +85,11 @@ export default function ProductDetail() {
     }
   };
 
-  // const handleAddToCart = async () => {
-  //   if (!isAuthenticated()) {
-  //     toast.error("Please login to add items to cart");
-  //     router.push("/login");
-  //     return;
-  //   }
-
-  //   setAddingToCart(true);
-  //   const result = await addToCart(product._id, quantity);
-  //   setAddingToCart(false);
-  // };
   const handleAddToCart = async () => {
     setAddingToCart(true);
     const result = await addToCart(product._id, quantity);
     setAddingToCart(false);
   };
-
-  // const handleBuyNow = async () => {
-  //   if (!isAuthenticated()) {
-  //     toast.error("Please login to purchase");
-
-  //     router.push("/login");
-  //     return;
-  //   }
-
-  //   setBuyingNow(true);
-
-  //   try {
-  //     const buyNowItem = {
-  //       product: {
-  //         _id: product._id,
-  //         name: product.name,
-  //         slug: product.slug,
-  //         mainImage: product.mainImage,
-  //         category: product.category,
-  //         salePrice: product.salePrice,
-  //         productPrice: product.productPrice,
-  //         quantity: product.quantity,
-  //       },
-  //       quantity: quantity,
-  //       salePrice: product.salePrice,
-  //       productPrice: product.productPrice,
-  //     };
-
-  //     sessionStorage.setItem("buyNowItem", JSON.stringify(buyNowItem));
-
-  //     router.push("/checkout?buyNow=true");
-  //   } catch (error) {
-  //     console.error("Buy now error:", error);
-  //     toast.error("Failed to proceed to checkout");
-  //   } finally {
-  //     setBuyingNow(false);
-  //   }
-  // };
 
   const handleBuyNow = async () => {
     if (!isAuthenticated()) {
@@ -181,16 +134,6 @@ export default function ProductDetail() {
     }
   };
 
-  // const handleToggleWishlist = async () => {
-  //   if (!isAuthenticated()) {
-  //     toast.error("Please login to add items to wishlist");
-  //     router.push("/login");
-  //     return;
-  //   }
-
-  //   await toggleWishlist(product._id);
-  // };
-
   const handleToggleWishlist = async () => {
     await toggleWishlist(product._id);
   };
@@ -234,6 +177,8 @@ export default function ProductDetail() {
   const isWishlisted = isInWishlist(product._id);
 
   return (
+    <>
+    <Nav/>
     <section className="bg-gray-50 min-h-screen py-8">
       <div className="container mx-auto px-4">
         <nav className="mb-6">
@@ -489,5 +434,7 @@ export default function ProductDetail() {
         </div>
       </div>
     </section>
+    <Footer/>
+    </>
   );
 }
