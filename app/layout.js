@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Mindful Living",
-  description: "A thoughtfully curated platform offering skin care, hair care, wellness, nutrition, and spiritual lifestyle essentials for everyday balance.",
+  description: "A platform offering skin care, hair care, wellness, nutrition, and spiritual lifestyle essentials for everyday balance.",
 };
 
 export default function RootLayout({ children }) {
